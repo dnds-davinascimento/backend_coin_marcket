@@ -1,0 +1,179 @@
+import { Request, Response } from "express";
+import User from "../models/user";
+import bcrypt from "bcryptjs"; // Usando bcryptjs para a criptografia
+import dotenv from "dotenv";
+
+dotenv.config(); // Carregar as variáveis de ambiente
+
+const userController = {
+  // Registrar um novo usuário (admin ou padrão)
+  registerUser: async (req: Request, res: Response): Promise<void> => {
+    const id_loja = req.headers.id as string;
+    const user_store_id = req.headers.user_store_idd as string;
+    const id_store = user_store_id ? user_store_id : id_loja;
+
+    const { email, password, name, permissions, paymentAlert } = req.body;
+
+    try {
+      // Verificar se o email já existe
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        res.status(400).json({ msg: "Este email já está em uso." });
+        return;
+      }
+
+      // Criptografar a senha
+      const salt = await bcrypt.genSalt(12); // Gerar o salt para a hash
+      const hashedPassword = await bcrypt.hash(password, salt); // Hash da senha
+
+      // Criar novo usuário
+      const newUser = new User({
+        name,
+        email,
+        paymentAlert,
+        password: hashedPassword,
+        user_store_id: id_store,
+        permissions: permissions || {
+          user: { view: false, create: false, edit: false, delete: false },
+          product: { view: false, create: false, edit: false, delete: false },
+        },
+      });
+
+      // Salvar no banco de dados
+      await newUser.save();
+
+      res.status(201).json({
+        msg: "Usuário registrado com sucesso!",
+        user: {
+          _id: newUser._id,
+          name: newUser.name,
+          email: newUser.email,
+          permissions: newUser.permissions,
+        },
+      });
+    } catch (error) {
+      console.log(error);
+      res
+        .status(500)
+        .json({ msg: "Erro no servidor, tente novamente mais tarde." });
+    }
+  },
+  // pegar produtos por parginação da idealsoft
+  get_user_store: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id_loja = req.headers.id as string;
+      const user_store_id = req.headers.user_store_idd as string;
+      const id_store = user_store_id ? user_store_id : id_loja;
+
+      if (!id_store) {
+        res.status(400).json({ msg: "ID da loja não fornecido no cabeçalho." });
+        return;
+      }
+
+      // Busca a loja no banco de dados pelo ID do usuário
+      const store = await User.find({ user_store_id: id_store }); // Supondo que você tenha um modelo de `Store`
+
+      if (!store) {
+        res.status(404).json({ msg: "Loja não encontrada." });
+        return;
+      }
+
+      // Retorna os dados da loja
+      res.status(200).json(store);
+    } catch (error) {
+      console.log(error);
+      res
+        .status(500)
+        .json({ msg: "Erro no servidor, tente novamente mais tarde" });
+    }
+  },
+  UserById: async (req: Request, res: Response): Promise<void> => {
+    const userId = req.params.id; // Pega o ID do usuário dos parâmetros da rota
+    
+
+    try {
+      // Verificar se o usuário existe
+      const user = await User.findById(userId);
+
+      if (!user) {
+        res.status(404).json({ msg: "Usuário não encontrado." });
+        return;
+      }
+
+      // Deletar o usuário
+
+      res.status(200).json(user);
+    } catch (error) {
+      console.error(error);
+      res
+        .status(500)
+        .json({ msg: "Erro no servidor, tente novamente mais tarde." });
+    }
+  },
+  // Função para editar um usuário por ID
+  editUserById: async (req: Request, res: Response): Promise<void> => {
+    const userId = req.params.id; // Pega o ID do usuário dos parâmetros da rota
+    const { name, email, password, permissions, paymentAlert } = req.body; // Dados a serem atualizados
+   
+
+    try {
+      // Verificar se o usuário existe
+      const user = await User.findById(userId);
+      if (!user) {
+        res.status(404).json({ msg: "Usuário não encontrado." });
+        return;
+      }
+
+      // Atualizar os campos do usuário se fornecidos
+      if (name) user.name = name;
+      if (email) user.email = email;
+      user.paymentAlert = paymentAlert;
+
+      // Atualizar a senha se for fornecida (e criptografá-la)
+      if (password) {
+        const salt = await bcrypt.genSalt(12); // Gerar o salt para a hash
+        const hashedPassword = await bcrypt.hash(password, salt); // Hash da senha
+        user.password = hashedPassword;
+      }
+
+      // Atualizar permissões se fornecidas
+      if (permissions) user.permissions = permissions;
+
+      // Salvar as alterações no banco de dados
+      await user.save();
+
+      res.status(201).json({ msg: "Usuário atualizado com sucesso!", user });
+    } catch (error) {
+      console.error(error);
+      res
+        .status(500)
+        .json({ msg: "Erro no servidor, tente novamente mais tarde." });
+    }
+  },
+
+  deleteUserById: async (req: Request, res: Response): Promise<void> => {
+    const userId = req.params.id; // Pega o ID do usuário dos parâmetros da rota
+
+    try {
+      // Verificar se o usuário existe
+      const user = await User.findById(userId);
+
+      if (!user) {
+        res.status(404).json({ msg: "Usuário não encontrado." });
+        return;
+      }
+
+      // Deletar o usuário
+      await User.findByIdAndDelete(userId);
+
+      res.status(200).json({ msg: "Usuário deletado com sucesso!" });
+    } catch (error) {
+      console.error(error);
+      res
+        .status(500)
+        .json({ msg: "Erro no servidor, tente novamente mais tarde." });
+    }
+  },
+};
+
+export default userController;

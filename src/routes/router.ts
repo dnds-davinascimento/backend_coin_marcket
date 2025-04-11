@@ -1,0 +1,24 @@
+import { Router } from "express";
+import produtoRouter from "./produtos/produtos";
+import vendaRouter from "./vendas/vendas";
+import adminRouter from "./admin/admin";
+import loginRouter from "./login/login";
+import webhookRouter from "./webhook/webhook"
+import clientesRouter from "./clientes/clientes"
+import usersRouter from "./users/users"
+
+
+const router: Router = Router();
+
+// Usando as rotas importadas
+router.use("/", produtoRouter);
+router.use("/", vendaRouter);
+router.use("/", adminRouter);
+router.use("/", loginRouter);
+router.use("/", webhookRouter);
+router.use("/", clientesRouter);
+router.use("/" , usersRouter)
+
+
+
+export default router;
