@@ -41,7 +41,7 @@ const loginController = {
         permissions: existingUser?.permissions,
         user_store_id: existingUser?.user_store_id,
         isAdmin: existingAdmin ? existingAdmin.isAdmin : false,
-        nuvemshopConfigured: existingAdmin?.nuvemshopConfigured || true,
+       
       };
      
 

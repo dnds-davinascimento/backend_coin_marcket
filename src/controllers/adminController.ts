@@ -38,7 +38,7 @@ const adminController = {
           _id: newAdmin._id,
           name: newAdmin.name,
           email: newAdmin.email,
-          nuvemshopConfigured: newAdmin.nuvemshopConfigured,
+    
         },
       });
     } catch (error) {

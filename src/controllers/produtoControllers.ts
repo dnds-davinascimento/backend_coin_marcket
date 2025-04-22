@@ -3,10 +3,10 @@ import axios from "axios";
 import dotenv from "dotenv";
 import Admin from "../models/Admin"; // Importa o model Admin
 import Auxiliares from "../models/auxiliares"; // Importa o model Admin
-import Product from "../models/product";
+
 import { generateSignature } from "../services/generateSignature";
 import authService from "../services/authService";
-import { obterCredenciais } from "../services/credenciaisService";
+
 import nodemailer from "nodemailer";
 import User from "../models/user";
 dotenv.config(); // Carregar as variáveis de ambiente
@@ -176,66 +176,7 @@ const sendPriceEmail = async (
 
 const produto_Schema = {
   // pegar produtos por parginação da idealsoft
-  getIdealsoft: async (req: Request, res: Response): Promise<void> => {
-    try {
-      const id_loja = req.headers.id as string;
-      const user_store_id = req.headers.user_store_idd as string;
-      const id_store = user_store_id ? user_store_id : id_loja;
 
-      // Obter credenciais usando o serviço
-      const { serie, api, codFilial, senha } = await obterCredenciais(id_store);
-
-      // 1. Primeiro, obtenha o token de autenticação
-      const token = await authService.getAuthToken(serie, codFilial, api);
-
-      const method = "get";
-      const body = "";
-
-      // Assumindo que o corpo está vazio para requisição GET
-      const { signature, timestamp } = generateSignature(method, senha, body);
-
-      // 2. Configuração do cabeçalho da requisição
-      const headers = {
-        Signature: signature,
-        CodFilial: codFilial,
-        Authorization: `Token ${token}`,
-        Timestamp: timestamp.toString(),
-      };
-      let pagina = req.query.page;
-
-      // 3. Requisição para a API da Idealsoft com os headers
-      const { data } = await axios.get<Response_ideal_product_pagination>(
-        `${api}/produtos/${pagina || 1}`,
-        {
-          headers,
-        }
-      );
-
-      if (data.dados && data.dados.length > 0) {
-        for (const produto of data.dados) {
-          // Verificando se o produto já existe no MongoDB
-          const produtoExistente = await Product.findOne({
-            idealProductId: produto.codigo,
-          });
-
-          if (produtoExistente) {
-            // Se existir, adiciona o atributo com o valor já presente
-            produto.na_nuvem = true;
-          } else {
-            // Se não existir, adiciona o atributo com o valor 'false'
-            produto.na_nuvem = false;
-          }
-        }
-      }
-
-      res.status(200).json(data);
-    } catch (error) {
-      console.log(error);
-      res
-        .status(500)
-        .json({ msg: "Erro no servidor, tente novamente mais tarde" });
-    }
-  },
 
 };
 

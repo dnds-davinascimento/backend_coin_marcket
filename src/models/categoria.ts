@@ -4,6 +4,7 @@ interface ICategoria extends Document {
   nome: string;
   categoria_da_loja?: Types.ObjectId;
   categoria_compartilhada?: boolean;
+  parient?: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -14,6 +15,12 @@ const categoria_produto_Schema = new Schema<ICategoria>(
       type: String,
       required: true,
     },
+    parient: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Categoria",
+      },
+    ],
     categoria_da_loja: {
       type: Schema.Types.ObjectId,
       ref: "Loja",
