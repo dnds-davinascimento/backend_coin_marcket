@@ -8,11 +8,11 @@ import authService from "../services/authService";
 
 dotenv.config(); // Carregar as variáveis de ambiente
 
-const cliente_Schema = {
+const customer_Schema = {
 
 
 
 
 };
 
-export default cliente_Schema;
+export default customer_Schema;

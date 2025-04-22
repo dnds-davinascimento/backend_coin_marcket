@@ -4,7 +4,7 @@ import vendaRouter from "./vendas/vendas";
 import adminRouter from "./admin/admin";
 import loginRouter from "./login/login";
 import webhookRouter from "./webhook/webhook"
-import clientesRouter from "./clientes/clientes"
+import customerRouter from "./customer/customer"
 import usersRouter from "./users/users"
 import lojaRouter from "./loja/loja"
 
@@ -17,7 +17,7 @@ router.use("/", vendaRouter);
 router.use("/", adminRouter);
 router.use("/", loginRouter);
 router.use("/", webhookRouter);
-router.use("/", clientesRouter);
+router.use("/", customerRouter);
 router.use("/" , usersRouter)
 router.use("/", lojaRouter);
 
