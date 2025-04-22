@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import User from "../models/user";
+import { Loja } from "../models/loja";
+import Admin from "../models/Admin"; // Importa o model Admin
 import bcrypt from "bcryptjs"; // Usando bcryptjs para a criptografia
 import dotenv from "dotenv";
 
@@ -9,8 +11,15 @@ const userController = {
   // Registrar um novo usuário (admin ou padrão)
   registerUser: async (req: Request, res: Response): Promise<void> => {
     const id_loja = req.headers.id as string;
-    const user_store_id = req.headers.user_store_idd as string;
-    const id_store = user_store_id ? user_store_id : id_loja;
+    console.log("ID da loja:", id_loja); // Log do ID da loja recebido no cabeçalho
+    
+    
+  const loja = await Loja.findById(id_loja); // Busca a loja pelo ID
+    if (!loja) {
+      res.status(404).json({ msg: "Loja não encontrada." });
+      return;
+    }
+    const id_store = loja._id; // ID da loja
 
     const { email, password, name, permissions, paymentAlert } = req.body;
 

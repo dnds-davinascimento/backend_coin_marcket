@@ -20,7 +20,7 @@ interface ITransactionHistory {
 interface ICustomer extends Document {
     name: string;
     email?: string;
-    password?: string; // Senha do cliente (opcional, se necessário)
+    password: string; // Senha do cliente (opcional, se necessário)
     type?: string;
     indicador_IE?: number; // Indicador IE
     phone?: string;
