@@ -3,6 +3,7 @@ import { Customer } from "../models/custumer"; // Importa o model Customer
 import { Loja } from "../models/loja"; // Importa o model Loja
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
+import { get } from "axios";
 
 dotenv.config();
 
@@ -117,7 +118,21 @@ const customerController = {
     }
   },
 
-  // Outras funções do controller podem ser adicionadas aqui...
+  /* buscar custumers por id */
+  getCustomerById: async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+    try {
+      const customer = await Customer.findById(id);
+      if (!customer) {
+        res.status(404).json({ msg: "Cliente não encontrado" });
+        return;
+      }
+      res.status(200).json(customer);
+    } catch (error) {
+      console.error("Erro ao buscar cliente:", error);
+      res.status(500).json({ msg: "Erro no servidor ao buscar cliente" });
+    }
+  }
 };
 
 export default customerController;
