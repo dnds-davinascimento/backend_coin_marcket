@@ -7,6 +7,7 @@ import webhookRouter from "./webhook/webhook"
 import customerRouter from "./customer/customer"
 import usersRouter from "./users/users"
 import lojaRouter from "./loja/loja"
+import categoriaRouter from "./categoria/categoria"
 
 
 const router: Router = Router();
@@ -20,6 +21,7 @@ router.use("/", webhookRouter);
 router.use("/", customerRouter);
 router.use("/" , usersRouter)
 router.use("/", lojaRouter);
+router.use("/", categoriaRouter);
 
 
 

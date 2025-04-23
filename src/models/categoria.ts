@@ -3,8 +3,12 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 interface ICategoria extends Document {
   nome: string;
   categoria_da_loja?: Types.ObjectId;
-  categoria_compartilhada?: boolean;
-  parient?: Types.ObjectId[];
+  parient?: Types.ObjectId;
+  subcategorias?:
+  [{
+    id: Types.ObjectId;
+    nome: string;
+  }];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -15,20 +19,27 @@ const categoria_produto_Schema = new Schema<ICategoria>(
       type: String,
       required: true,
     },
-    parient: [
+    parient: {
+      type: Schema.Types.ObjectId,
+      ref: "Categoria",
+    },
+    subcategorias: [
       {
-        type: Schema.Types.ObjectId,
-        ref: "Categoria",
+        id: {
+          type: Schema.Types.ObjectId,
+          ref: "Categoria",
+        },
+        nome: {
+          type: String,
+          required: true,
+        },
       },
     ],
     categoria_da_loja: {
       type: Schema.Types.ObjectId,
       ref: "Loja",
     },
-    categoria_compartilhada: {
-      type: Boolean,
-      default: false,
-    },
+
   },
   { timestamps: true }
 );
