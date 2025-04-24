@@ -177,6 +177,7 @@ interface IProdutoBody {
   produto_shared?: boolean;
   produto_servico?: boolean;
   mostrar_no_super_market?: boolean;
+  imgs?: [{url: string}];
 }
 
 
@@ -208,7 +209,6 @@ const produto_Schema = {
       icms,
       ipi,
       frete,
-      produto_da_loja,
       produto_do_fornecedor,
       produto_verify = false, // Valor padrão
       produto_marcket = false, // Valor padrão
@@ -216,10 +216,11 @@ const produto_Schema = {
       produto_shared = false, // Valor padrão
       produto_servico = false, // Valor padrão
       mostrar_no_super_market = false, // Valor padrão
+      imgs = [], // Array de imagens, pode ser vazio ou conter objetos com a propriedade url
 
-    } = req.body as IProdutoBody;
-    const { id: categoriaId } = categoria as ICategoria;
-
+    } = req.body.produto as IProdutoBody;
+    console.log("Dados do produto:", req.body); // Log dos dados do produto recebidos no corpo da requisição
+    
     const id_loja = req.headers.id as string;
     
 
@@ -234,7 +235,7 @@ const produto_Schema = {
     try {
       const produto = await Produto.create({
         nome,
-        categoria: categoriaId,
+        categoria,
         codigo_interno,
         codigo_da_nota,
         enderecamento,
@@ -268,10 +269,7 @@ const produto_Schema = {
         mostrar_no_super_market,
 
         produto_sincronizado: false,
-        produto: {
-          nome,
-          id: new Types.ObjectId(),
-        },
+        imgs, // Inicializa o array de imagens vazio
         historico: [
           {
             usuario: "Sistema",
@@ -300,7 +298,7 @@ const produto_Schema = {
   /* buscar produtos por loja*/
   getProductsByStore: async (req: Request, res: Response) => {
     const id_loja = req.headers.id as string;
-    console.log("ID da loja:", id_loja); // Log do ID da loja recebido no cabeçalho
+    
     try {
       const loja = await Loja.findById(id_loja); // Busca a loja pelo ID
       if (!loja) {

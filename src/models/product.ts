@@ -24,10 +24,6 @@ interface IHistorico {
   estoqueAposAlteracao: number;
 }
 
-interface IFoto {
-  // Define your photo object structure here if needed
-  [key: string]: any;
-}
 
 interface IProduto extends Document {
   nome: string;
@@ -73,7 +69,10 @@ interface IProduto extends Document {
   produto_da_loja?: Types.ObjectId;
   produto_do_fornecedor?: Types.ObjectId;
   historico?: IHistorico[];
-  foto?: IFoto;
+  imgs?: [{
+    url: string;
+    key?: string;
+  }];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -88,8 +87,12 @@ const produtoSchema = new Schema<IProduto>(
       id: {
         type: Schema.Types.ObjectId,
         ref: "Categoria",
+        required: false,
       },
-      nome: String,
+      nome: {
+        type: String,
+        required: false,
+      }
     },
     codigo_interno: {
       type: String,
@@ -272,7 +275,12 @@ const produtoSchema = new Schema<IProduto>(
         estoqueAposAlteracao: { type: Number, default: 0 },
       },
     ],
-    foto: Object,
+    imgs: [
+      {
+        url: { type: String, required: false },
+        key: { type: String, required: false },
+      },
+    ],
   },
   { timestamps: true }
 );
