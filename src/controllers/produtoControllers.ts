@@ -42,7 +42,7 @@ const sendEmail = async (
     await transporter.sendMail(mailOptions);
    
   } catch (error) {
-    console.error("Erro ao enviar e-mail: ", error);
+   
   }
 };
 // Nova função de e-mail específica para alterações de preço
@@ -112,7 +112,7 @@ const sendPriceEmail = async (
     await transporter.sendMail(mailOptions);
    
   } catch (error) {
-    console.error("Erro ao enviar e-mail: ", error);
+   
   }
 };
 interface ICategoria {
@@ -283,7 +283,7 @@ const produto_Schema = {
 
       res.status(201).json(produto);
     } catch (error) {
-      console.error("Erro ao criar produto: ", error);
+     
       res.status(500).json({ message: "Erro ao criar produto" });
     }
   },
@@ -303,7 +303,7 @@ const produto_Schema = {
       res.status(200).json(produtos);
     }
     catch (error) {
-      console.error("Erro ao buscar produtos: ", error);
+    
       res.status(500).json({ message: "Erro ao buscar produtos" });
     }
   },
@@ -318,7 +318,7 @@ const produto_Schema = {
       }
       res.status(200).json(produto);
     } catch (error) {
-      console.error("Erro ao buscar produto: ", error);
+    
       res.status(500).json({ message: "Erro ao buscar produto" });
     }
   },
@@ -333,7 +333,7 @@ const produto_Schema = {
       }
       res.status(200).json({ msg: "Produto deletado com sucesso." });
     } catch (error) {
-      console.error("Erro ao deletar produto: ", error);
+     
       res.status(500).json({ message: "Erro ao deletar produto" });
     }
   },
@@ -441,7 +441,7 @@ const produto_Schema = {
       }
       res.status(200).json(produto);
     } catch (error) {
-      console.error("Erro ao atualizar produto: ", error);
+     
       res.status(500).json({ message: "Erro ao atualizar produto" });
     }
   },

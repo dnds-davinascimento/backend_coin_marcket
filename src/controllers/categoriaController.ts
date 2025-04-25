@@ -5,10 +5,16 @@ import { Categoria } from "../models/categoria";
 interface CategoriaBody {
     nome: string;
     categoria_da_loja?: string;
+    categoriaDestaque?: boolean;
+    img_url?: {
+      key: string;
+      url: string;
+    };
     parient?: string;
     subcategorias?: Array<{
       id: string;
       nome: string;
+      remove?: boolean; // Adicionando o campo remove
     }>;
   }
 const categoriaSchema = {
@@ -17,7 +23,9 @@ const categoriaSchema = {
             /* id da loja nos headers */
             const lojaId = req.headers.id as string;
 
-            const { nome}: CategoriaBody = req.body;
+            const { nome ,categoriaDestaque,img_url}: CategoriaBody = req.body;
+
+           
         
             // Validações básicas
             if (!nome) {
@@ -39,7 +47,9 @@ const categoriaSchema = {
             // Criar objeto da categoria
             const novaCategoria = new Categoria({
               nome,
-                categoria_da_loja: lojaId,
+              categoria_da_loja: lojaId,
+              categoriaDestaque,
+              img_url
          
             });
         
@@ -54,7 +64,7 @@ const categoriaSchema = {
             });
         
           } catch (error) {
-            console.error("Erro ao criar categoria:", error);
+          
             return res.status(500).json({
               success: false,
               message: "Erro interno ao processar a criação da categoria",
@@ -82,7 +92,7 @@ const categoriaSchema = {
             return res.status(200).json(categorias);
         
           } catch (error) {
-            console.error("Erro ao buscar categorias:", error);
+           
             return res.status(500).json({
               success: false,
               message: "Erro interno ao processar a busca de categorias",
@@ -116,7 +126,7 @@ const categoriaSchema = {
             return res.status(200).json(categoria);
         
           } catch (error) {
-            console.error("Erro ao buscar categoria:", error);
+           
             return res.status(500).json({
               success: false,
               message: "Erro interno ao processar a busca de categoria",
@@ -128,17 +138,9 @@ const categoriaSchema = {
     updateById: async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
-            const { nome }: CategoriaBody = req.body;
-        
-            // Verifica se o ID é válido
-            if (!mongoose.Types.ObjectId.isValid(id)) {
-                return res.status(400).json({
-                    success: false,
-                    message: "ID inválido",
-                });
-            }
-        
-            // Verifica se a categoria existe
+            const { nome,subcategorias,categoriaDestaque,img_url }: CategoriaBody = req.body;
+
+            /* verificar se exite categoria */
             const categoriaExistente = await Categoria.findById(id);
             if (!categoriaExistente) {
                 return res.status(404).json({
@@ -146,26 +148,35 @@ const categoriaSchema = {
                     message: "Categoria não encontrada",
                 });
             }
-        
-            // Atualiza a categoria pelo ID
-            const categoriaAtualizada = await Categoria.findByIdAndUpdate(
-                id,
-                {
-                    nome,
-                },
-                { new: true } // Retorna o documento atualizado
-            );
-        
-    
-        
+            categoriaExistente.nome = nome || categoriaExistente.nome;
+            categoriaExistente.categoriaDestaque = categoriaDestaque || categoriaExistente.categoriaDestaque;
+            categoriaExistente.img_url = img_url || categoriaExistente.img_url;
+
+            /* verificar se alguma subcategoria tem o atributo remove: true se estiver remover do array */
+            if (subcategorias) {
+                /*pargar o id da categoria que esta sendo removida */
+                const subcategoriasRemovidas = subcategorias.filter((subcategoria) => subcategoria.remove).map(subcategoria => subcategoria.id);
+                /* limpar o atributo parient?: string; da subcategoria no banco  */
+                await Categoria.updateMany(
+                    { _id: { $in: subcategoriasRemovidas } },
+                    { $unset: { parient: "" } }
+                );
+                /* remover subcategorias do array de subcategorias da categoria pai */
+                const filteredSubcategorias = (categoriaExistente.subcategorias ?? []).filter(subcategoria => !subcategoriasRemovidas.includes(subcategoria.id.toString()));
+                categoriaExistente.subcategorias = filteredSubcategorias.length === 1 ? [filteredSubcategorias[0]] : undefined;
+            }
+            /* salvar a categoria */
+            const categoriaAtualizada = await categoriaExistente.save();
             return res.status(200).json({
                 success: true,
-                message: "Categoria atualizada com sucesso",
-                data: categoriaAtualizada
+                msg: "Categoria atualizada com sucesso",
+                data: categoriaAtualizada,
             });
         
+
+        
         } catch (error) {
-            console.error("Erro ao atualizar categoria:", error);
+            
             return res.status(500).json({
                 success: false,
                 message: "Erro interno ao processar a atualização da categoria",
@@ -212,7 +223,7 @@ const categoriaSchema = {
             });
         
         } catch (error) {
-            console.error("Erro ao deletar categoria:", error);
+           
             return res.status(500).json({
                 success: false,
                 message: "Erro interno ao processar a deleção da categoria",
@@ -226,7 +237,7 @@ const categoriaSchema = {
            
             const { categoriaPai_Id, categoriasSelecionadas } = req.body;
 
-            console.log("ID da categoria pai:", categoriaPai_Id);
+            
             
  
     
@@ -279,7 +290,7 @@ const categoriaSchema = {
             // Salvar as alterações na categoria pai
             const categoriaAtualizada = await categoriaPai.save();
 
-            console.log("Categoria pai atualizada:", categoriaAtualizada);
+           
 
 
             return res.status(201).json({
@@ -294,7 +305,7 @@ const categoriaSchema = {
 
     
         } catch (error) {
-            console.error("Erro ao atualizar subcategorias:", error);
+           
             return res.status(500).json({
                 success: false,
                 message: "Erro interno ao processar a atualização das subcategorias",

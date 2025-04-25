@@ -4,6 +4,11 @@ interface ICategoria extends Document {
   nome: string;
   categoria_da_loja?: Types.ObjectId;
   parient?: Types.ObjectId;
+  categoriaDestaque?: boolean;
+  img_url?: {
+    key: string;
+    url: string;
+  };
   subcategorias?:
   [{
     id: Types.ObjectId;
@@ -18,6 +23,20 @@ const categoria_produto_Schema = new Schema<ICategoria>(
     nome: {
       type: String,
       required: true,
+    },
+    categoriaDestaque: {
+      type: Boolean,
+      default: false,
+    },
+    img_url: {
+      key: {
+        type: String,
+        required: false,
+      },
+      url: {
+        type: String,
+        required: false,
+      },
     },
     parient: {
       type: Schema.Types.ObjectId,
