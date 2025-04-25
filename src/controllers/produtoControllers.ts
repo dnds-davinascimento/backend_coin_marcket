@@ -40,7 +40,7 @@ const sendEmail = async (
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('E-mail de relatório enviado com sucesso');
+   
   } catch (error) {
     console.error("Erro ao enviar e-mail: ", error);
   }
@@ -110,7 +110,7 @@ const sendPriceEmail = async (
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('E-mail de alterações de preço enviado');
+   
   } catch (error) {
     console.error("Erro ao enviar e-mail: ", error);
   }
@@ -120,28 +120,19 @@ interface ICategoria {
   nome?: string;
 }
 
-interface IProdutoSincronizado {
-  produto_sincronizado: boolean;
-  produto: {
-    nome?: string;
-    id?: string;
-  };
-}
+
 
 interface IHistorico {
   usuario?: string;
   data: Date;
   acao: string;
-  id_acao?: string;
+  id_acao?: string | Types.ObjectId;
   desc?: string;
   estoqueAntesAlteracao: number;
   quantidade: number;
   estoqueAposAlteracao: number;
 }
 
-interface IFoto {
-  [key: string]: any;
-}
 
 interface IProdutoBody {
   nome: string;
@@ -157,6 +148,7 @@ interface IProdutoBody {
   estoque?: number;
   estoque_vendido?: number;
   un: string;
+  historico?: IHistorico[];
   preco_de_custo: number;
   preco_de_venda: number;
   ncm?: string;
@@ -219,7 +211,7 @@ const produto_Schema = {
       imgs = [], // Array de imagens, pode ser vazio ou conter objetos com a propriedade url
 
     } = req.body.produto as IProdutoBody;
-    console.log("Dados do produto:", req.body); // Log dos dados do produto recebidos no corpo da requisição
+   
     
     const id_loja = req.headers.id as string;
     
@@ -348,13 +340,14 @@ const produto_Schema = {
   /* atualizar produto por id*/
   updateProductById: async (req: Request, res: Response) => {
     const id = req.params.id; // Pega o ID do produto dos parâmetros da rota
-    const { 
-      nome,
-      categoria, 
-      codigo_interno, 
-      estoque, 
-      preco_de_custo, 
-      preco_de_venda,
+    /* ver se o produto existe */
+    const produto = await Produto.findById(id);
+    if (!produto) {
+      res.status(404).json({ msg: "Produto não encontrado." });
+      return;
+    }
+    const { nome, categoria,
+      codigo_interno,
       codigo_da_nota,
       enderecamento,
       codigo_de_barras,
@@ -362,72 +355,86 @@ const produto_Schema = {
       marca,
       estoque_minimo,
       estoque_maximo,
+      estoque,
       estoque_vendido,
       un,
+      imgs,
+      preco_de_custo,
+      preco_de_venda,
       ncm,
-      cest, 
+      cest,
       cst,
       cfop,
       origem_da_mercadoria,
-      peso_bruto_em_kg, 
+      peso_bruto_em_kg,
       peso_liquido_em_kg,
       icms,
       ipi,
       frete,
-      produto_da_loja,
       produto_do_fornecedor,
-      produto_verify,
-      produto_marcket,
-      produto_de_rota,
-      produto_shared,
-      produto_servico,
-      mostrar_no_super_market,
-      
-
-
-    } = req.body as IProdutoBody;
-    
+      produto_verify = false, // Valor padrão
+      produto_marcket = false, // Valor padrão
+      produto_de_rota = false, // Valor padrão
+      produto_shared = false, // Valor padrão
+      produto_servico = false, // Valor padrão
+      mostrar_no_super_market = false, // Valor padrão
+    } = req.body.produto as IProdutoBody; // Pega os dados do produto do corpo da requisição
+   
+    // Pega as imagens do corpo da requisição, se não houver, inicializa como array vazio
     try {
-      const produto = await Produto.findByIdAndUpdate(
-        id,
-        { nome, 
-          categoria, 
-          codigo_interno, 
-          estoque, 
-          preco_de_custo, 
-          preco_de_venda,
-          codigo_da_nota,
-          enderecamento,
-          codigo_de_barras,
-          codigo_do_fornecedor,
-          marca,
-          estoque_minimo,
-          estoque_maximo,
-          estoque_vendido,
-          un,
-          ncm,
-          cest,
-          cst,
-          cfop,
-          origem_da_mercadoria,
-          peso_bruto_em_kg,
-          peso_liquido_em_kg,
-          icms,
-          ipi,
-          frete,
-          produto_da_loja,
-          produto_do_fornecedor,
-          produto_verify,
-          produto_marcket,
-          produto_de_rota,
-          produto_shared,
-          produto_servico,
-          mostrar_no_super_market,
+      produto.nome = nome || produto.nome;
+      produto.categoria = categoria || produto.categoria;
+      produto.codigo_interno = codigo_interno || produto.codigo_interno;
+      produto.codigo_da_nota = codigo_da_nota || produto.codigo_da_nota;
+      produto.enderecamento = enderecamento || produto.enderecamento;
+      produto.codigo_de_barras = codigo_de_barras || produto.codigo_de_barras;
+      produto.codigo_do_fornecedor = codigo_do_fornecedor || produto.codigo_do_fornecedor;
+      produto.marca = marca || produto.marca;
+      produto.estoque_minimo = estoque_minimo || produto.estoque_minimo;
+      produto.estoque_maximo = estoque_maximo || produto.estoque_maximo;
+      produto.estoque = estoque || produto.estoque;
+      produto.estoque_vendido = estoque_vendido || produto.estoque_vendido;
+      produto.un = un || produto.un;
+      produto.preco_de_custo = preco_de_custo || produto.preco_de_custo;
+      produto.preco_de_venda = preco_de_venda || produto.preco_de_venda;
+      produto.ncm = ncm || produto.ncm;
+      produto.cest = cest || produto.cest;
+      produto.cst = cst || produto.cst;
+      produto.cfop = cfop || produto.cfop;
+      produto.origem_da_mercadoria = origem_da_mercadoria || produto.origem_da_mercadoria;
+      produto.peso_bruto_em_kg = peso_bruto_em_kg || produto.peso_bruto_em_kg;
+      produto.peso_liquido_em_kg = peso_liquido_em_kg || produto.peso_liquido_em_kg;
+      produto.icms = icms || produto.icms;
+      produto.ipi = ipi || produto.ipi;
+      produto.frete = frete || produto.frete;
+      produto.produto_do_fornecedor = produto_do_fornecedor 
+        ? (typeof produto_do_fornecedor === 'string' ? new Types.ObjectId(produto_do_fornecedor) : produto_do_fornecedor)
+        : produto.produto_do_fornecedor;
+      produto.produto_verify = produto_verify || produto.produto_verify;
+      produto.produto_marcket = produto_marcket || produto.produto_marcket;
+      produto.produto_de_rota = produto_de_rota || produto.produto_de_rota;
+      produto.produto_shared = produto_shared || produto.produto_shared;
+      produto.produto_servico = produto_servico || produto.produto_servico;
+      produto.mostrar_no_super_market = mostrar_no_super_market || produto.mostrar_no_super_market;
+      produto.imgs = imgs; // Atualiza as imagens do produto, se houver novas imagens no corpo da requisição
+      const id_acao = new Types.ObjectId(); // Gera um novo ID para a ação
+      (produto.historico ??= []).push({
+        usuario: "Sistema",
+        data: new Date(),
+        acao: "Atualização",
+        id_acao: `${id_acao}`,
+        desc: "Produto atualizado",
+        estoqueAntesAlteracao: produto.estoque ?? 0,
+        quantidade: estoque || 0,
+        estoqueAposAlteracao: estoque || 0,
+      });
+      // Atualiza o produto no banco de dados
+      await produto.save();
 
 
-        },
-        { new: true }
-      );
+      
+ 
+      
       if (!produto) {
         res.status(404).json({ msg: "Produto não encontrado." });
         return;
