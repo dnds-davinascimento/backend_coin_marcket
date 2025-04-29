@@ -290,23 +290,45 @@ const produto_Schema = {
   /* buscar produtos por loja*/
   getProductsByStore: async (req: Request, res: Response) => {
     const id_loja = req.headers.id as string;
+    const { nome, categoria, codigo_interno } = req.query;
     
-    try {
-      const loja = await Loja.findById(id_loja); // Busca a loja pelo ID
-      if (!loja) {
-        res.status(404).json({ msg: "Loja não encontrada." });
-        return;
-      }
-      const id_store = loja._id; // ID da loja
+    
+    const query: any = {
+      produto_da_loja: id_loja, // Filtro para buscar produtos da loja específica
+    };
 
-      const produtos = await Produto.find({ produto_da_loja: id_store });
-      res.status(200).json(produtos);
+    if (nome) {
+      query.nome = { $regex: new RegExp(nome as string, "i") };
     }
-    catch (error) {
     
-      res.status(500).json({ message: "Erro ao buscar produtos" });
+    if (categoria) {
+      // Correção: Verifica se a categoria existe antes de acessar .id
+      query["categoria.id"] = categoria; // Alternativa mais segura
+      // Ou se sua estrutura for diferente:
+      // query.categoria = { id: categoria };
     }
-  },
+    
+    if (codigo_interno) {
+      query.codigo_interno = { $regex: new RegExp(codigo_interno as string, "i") };
+    }
+
+    try {
+      const loja = await Loja.findById(id_loja);
+      
+      if (!loja) {
+        return res.status(404).json({ msg: "Loja não encontrada." });
+      }
+      
+      const produtos = await Produto.find(query);
+        
+  
+      
+      return res.status(200).json(produtos);
+    } catch (error) {
+      console.error("Erro ao buscar produtos:", error);
+      return res.status(500).json({ message: "Erro ao buscar produtos" });
+    }
+},
   /* buscar produtos por id*/
   getProductById: async (req: Request, res: Response) => {
     const id = req.params.id; // Pega o ID do produto dos parâmetros da rota
