@@ -60,6 +60,9 @@ interface IProduto extends Document {
   preco_por_categoria?: {
     Preco_venda_categoria?: number;
   };
+  descricao?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   produto_verify?: boolean;
   produto_marcket?: boolean;
   produto_de_rota?: boolean;

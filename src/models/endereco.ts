@@ -1,16 +1,16 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 interface IEndereco extends Document {
-  bairro?: string;
-  cep?: string;
-  codigoCidade?: string;
-  estado?: string;
+  bairro: string;
+  cep: string;
+  codigoCidade: string;
+  estado: string;
   logradouro?: string;
-  numero?: string;
+  numero: string;
   tipoLogradouro: string;
   codigoPais: string;
-  complemento?: string;
-  descricaoCidade?: string;
+  complemento: string;
+  descricaoCidade: string;
   descricaoPais: string;
   tipoBairro: string;
   createdAt: Date;
@@ -39,7 +39,7 @@ const enderecoSchema = new Schema<IEndereco>(
     },
     tipoLogradouro: {
       type: String,
-      default: "Rua"
+      
     },
     codigoPais: {
       type: String,

@@ -23,7 +23,7 @@ const customerController = {
       endereco
     } = req.body;
     let { store } = req.body; // A loja pode ser passada no corpo da requisição
-    console.log("Dados recebidos:", req.body);
+    
 
     try {
       // Validações básicas
