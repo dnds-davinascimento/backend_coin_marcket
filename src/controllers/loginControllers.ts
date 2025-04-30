@@ -71,7 +71,7 @@ const loginController = {
         isUser: existingUser ? true : false,
       };
 
-      console.log("Payload:", payload);
+      
      
       const secret = process.env.JWT_SECRET as string;
       const token = jwt.sign(payload, secret);

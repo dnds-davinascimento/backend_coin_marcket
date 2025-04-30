@@ -289,7 +289,10 @@ const produto_Schema = {
   },
   /* buscar produtos por loja*/
   getProductsByStore: async (req: Request, res: Response) => {
-    const id_loja = req.headers.id as string;
+    let id_loja = req.headers.id as string;
+    if (!id_loja) {
+     id_loja = "6807ab4fbaead900af4db229"
+    }
     const { nome, categoria, codigo_interno } = req.query;
     
     

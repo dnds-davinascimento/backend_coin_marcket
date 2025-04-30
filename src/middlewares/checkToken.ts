@@ -62,6 +62,7 @@ const permissionsMiddleware = (recurso: string) => {
       }
       
       const decoded = jwt.verify(token, secret) as JwtPayload;
+      
      
       const usuario = decoded;
 
@@ -69,6 +70,10 @@ const permissionsMiddleware = (recurso: string) => {
       if (usuario.isAdmin) {
         
         next(); // Se for admin, passa ao próximo middleware
+        return;
+      }
+      if (usuario.isCustomer) {
+        next(); // Se for cliente, passa ao próximo middleware
         return;
       }
 
