@@ -8,6 +8,7 @@ import customerRouter from "./customer/customer"
 import usersRouter from "./users/users"
 import lojaRouter from "./loja/loja"
 import categoriaRouter from "./categoria/categoria"
+import cartRouter from "./cart/cart"
 
 
 const router: Router = Router();
@@ -22,6 +23,7 @@ router.use("/", customerRouter);
 router.use("/" , usersRouter)
 router.use("/", lojaRouter);
 router.use("/", categoriaRouter);
+router.use("/",cartRouter);
 
 
 

@@ -83,11 +83,11 @@ const customerSchema = new Schema<ICustomer>({
     thumbnail: {
         key: {
           type: String,
-          required: true,
+          required: false,
         },
         url: {
           type: String,
-          required: true,
+          required: false,
         },
       },
     email: {
