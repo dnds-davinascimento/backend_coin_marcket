@@ -35,7 +35,10 @@ interface ICustomer extends Document {
     endereco: IEndereco[]; // Array de endereços
     createdAt: Date;
     updatedAt: Date;
-    thumbnail?: string; // URL da imagem do cliente
+    thumbnail?:{
+        url: string;
+        key?: string;
+      }; // URL da imagem do cliente
 }
 
 const monthlyPurchaseSchema = new Schema<IMonthlyPurchase>({
@@ -78,8 +81,15 @@ const customerSchema = new Schema<ICustomer>({
         trim: true
     },
     thumbnail: {
-        type: String,
-    },
+        key: {
+          type: String,
+          required: true,
+        },
+        url: {
+          type: String,
+          required: true,
+        },
+      },
     email: {
         type: String,
         trim: true,
