@@ -75,8 +75,11 @@ const categoriaSchema = {
     /* pegar categorias por loja */
     getByLoja: async (req: Request, res: Response) => {
         try {
-            const lojaId = req.headers.id as string;
             
+            let lojaId = req.headers.id as string;
+            if (!lojaId) {
+             lojaId = "6807ab4fbaead900af4db229"
+            }
         
             // Verifica se o ID da loja é válido
             if (!mongoose.Types.ObjectId.isValid(lojaId)) {

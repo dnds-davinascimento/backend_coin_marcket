@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document, Types, ObjectId } from 'mongoose';
 import { enderecoSchema, IEndereco } from "./endereco";
 
 // Interface para o valor de compras mensais
@@ -18,6 +18,7 @@ interface ITransactionHistory {
 
 // Interface principal do Customer
 interface ICustomer extends Document {
+    _id:ObjectId;
     name: string;
     email?: string;
     password: string; // Senha do cliente (opcional, se necessário)
@@ -75,6 +76,7 @@ const transactionHistorySchema = new Schema<ITransactionHistory>({
 });
 
 const customerSchema = new Schema<ICustomer>({
+    _id:{type:Schema.Types.ObjectId},
     name: {
         type: String,
         required: [true, 'Customer name is required'],

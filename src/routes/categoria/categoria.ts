@@ -152,8 +152,7 @@ const router: Router = Router();
  *       bearerFormat: JWT
  */
 router.route("/categorias").post(
-  checkToken,
-  permissionsMiddleware('categoria'), 
+
   (req: Request, res: Response) => categoriaControllers.create(req, res)
 );
 
@@ -187,31 +186,27 @@ router.route("/categorias").post(
  *                     $ref: '#/components/schemas/Categoria'
  */ 
 router.route("/categorias").get(
-  checkToken,
-  /* permissionsMiddleware('categoria'), */ 
+  
+
   (req: Request, res: Response) => categoriaControllers.getByLoja(req, res)
 );
 
 router.route("/categorias/:id").get(
-    checkToken,
-    permissionsMiddleware('categoria'), 
+ 
     (req: Request, res: Response) => categoriaControllers.getById(req, res)
 );
 
 router.route("/categorias/:id").put(
-  checkToken,
-    permissionsMiddleware('categoria'),
+
     (req: Request, res: Response) => categoriaControllers.updateById(req, res)
 );
 
 router.route("/setSubcategorias").post(
-  checkToken,
-    permissionsMiddleware('categoria'),
+
     (req: Request, res: Response) => categoriaControllers.setSubcategorias(req, res)
 );
 router.route("/categorias/:id").delete(
-  checkToken,
-    permissionsMiddleware('categoria'),
+
     (req: Request, res: Response) => categoriaControllers.deleteById(req, res)
 );
  

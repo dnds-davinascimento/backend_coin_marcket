@@ -63,6 +63,18 @@ const router: Router = Router();
 router.route("/addProduto").post(
     (req: Request, res: Response) => cartControllers.addProduto(req, res)
   );
+router.route("/getByConsumidor").get(
+    (req: Request, res: Response) => cartControllers.getByConsumidor(req, res)
+  );
+router.route("/RemoveProductFromCart").put(
+    (req: Request, res: Response) => cartControllers.RemoveProductFromCart(req, res)
+  );
+router.route("/decreaseProductQuantity").put(
+    (req: Request, res: Response) => cartControllers.decreaseProductQuantity(req, res)
+  );
+router.route("/increaseProductQuantity").put(
+    (req: Request, res: Response) => cartControllers.increaseProductQuantity(req, res)
+  );
 
 
 export default router;

@@ -96,15 +96,13 @@ const cartController = {
 
   getByConsumidor: async (req: Request, res: Response) => {
     try {
-      const { consumidorId } = req.params;
+      const custumer_id = req.headers['id'] as string | undefined;
+     
 
       // Busca os carrinhos do consumidor
-      const carrinhos = await Cart.find({ "consumidor.id": consumidorId });
-
-      return res.status(200).json({
-        success: true,
-        data: carrinhos,
-      });
+      const carrinhos = await Cart.find({ "consumidor.id": custumer_id });
+      
+      return res.status(200).json(carrinhos);
     } catch (error) {
       return res.status(500).json({
         success: false,
@@ -114,82 +112,136 @@ const cartController = {
     }
   },
 
-
-  delete: async (req: Request, res: Response) => {
+  addProduto: async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const custumer_id = req.headers['id'] as string | undefined;
+      const produtoBody = req.body; // Produto recebido do frontend
+      
 
-      // Verifica se o ID é válido
-      if (!mongoose.Types.ObjectId.isValid(id)) {
+      // Verifica se o ID do cliente foi fornecido
+      if (!custumer_id) {
         return res.status(400).json({
           success: false,
-          message: "ID de carrinho inválido",
+          message: "ID do cliente é obrigatório",
         });
       }
 
-      // Verifica se o carrinho existe
-      const carrinhoExistente = await Cart.findById(id);
-      if (!carrinhoExistente) {
-        return res.status(404).json({
+      // CORREÇÃO: Usar findById para buscar diretamente pelo ID
+      const consumidor = await Customer.findById(custumer_id);
+      
+     
+      
+      if (!consumidor) {
+        return res.status(404).json({ 
           success: false,
-          message: "Carrinho não encontrado",
+          msg: "Cliente não encontrado" 
         });
       }
 
-      // Remove o carrinho
-      await Cart.findByIdAndDelete(id);
+      // Prepara o objeto do produto para o carrinho
+      const produtoCart: IProdutoCart = {
+        _id: produtoBody.id,
+        nome: produtoBody.title,
+        quantidade: 1, // Sempre adiciona 1 unidade por clique
+        un: 'un', // Unidade padrão
+        preco_de_Venda: produtoBody.price,
+        preco_de_custo: 0, // Pode ajustar conforme sua lógica
+        desconto: produtoBody.price - produtoBody.discountedPrice, // Calcula o desconto
+        precoTotal: produtoBody.discountedPrice, // Usa o preço com desconto
+        estoque: produtoBody.stock,
+        status: 'pendente',
+        codigo_interno: '', // Pode ajustar conforme sua lógica
+        categoria: produtoBody.category,
+        imgs:produtoBody.imgs
+      };
 
-      return res.status(200).json({
-        success: true,
-        message: "Carrinho removido com sucesso",
+      // Busca carrinhos ativos do cliente (status diferente de finalizado)
+      let carrinhoAtivo = await Cart.findOne({ 
+        "consumidor.id": custumer_id,
+        "status_Cart": { $ne: "finalizado" }
       });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: "Erro interno ao remover carrinho",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
-    }
-  },
 
-  addProduto: async (req: Request, res: Response) => {
-    try {   
-        const custumer_id = req.headers['id'] as string | undefined;
+      if (!carrinhoAtivo) {
+        // Cria um novo carrinho se não existir um ativo
+        const novoCarrinho = new Cart({
+          consumidor: {
+            id: consumidor._id.toString(),
+            cpf: consumidor.taxId,
+            nome: consumidor.name,
+            email: consumidor.email || '',
+            contato: consumidor.phone || '',
+            endereco: consumidor.endereco || []
+          },
+          produtos: [produtoCart],
+          ItensTotal: 1, // 1 item inicial
+          valorTotal: produtoBody.discountedPrice, // Total inicial
+          valor_de_Desconto: produtoBody.price - produtoBody.discountedPrice, // Desconto total
+          status_Cart: 'aberto',
+          historico: [{
+            acao: `Carrinho criado com produto ${produtoBody.title}`,
+            data: new Date()
+          }]
+        });
 
-        const consumidor = await Customer.findById(custumer_id);
-        if (!consumidor) {
-          res.status(404).json({ msg: "Cliente não encontrado" });
-          return;
+        const carrinhoSalvo = await novoCarrinho.save();
+        
+        return res.status(201).json({
+          success: true,
+          message: "Novo carrinho criado e produto adicionado",
+          data: carrinhoSalvo
+        });
+      } else {
+        // Verifica se o produto já existe no carrinho
+        const produtoExistenteIndex = carrinhoAtivo.produtos.findIndex(
+          p => p._id === produtoBody.id
+        );
+
+        if (produtoExistenteIndex >= 0) {
+          // Incrementa a quantidade em 1 se o produto já existir
+          carrinhoAtivo.produtos[produtoExistenteIndex].quantidade += 1;
+          // Recalcula o preço total do produto
+          const precoUnitario = carrinhoAtivo.produtos[produtoExistenteIndex].preco_de_Venda;
+          const descontoUnitario = carrinhoAtivo.produtos[produtoExistenteIndex].desconto;
+          carrinhoAtivo.produtos[produtoExistenteIndex].precoTotal = 
+            (precoUnitario * carrinhoAtivo.produtos[produtoExistenteIndex].quantidade) - descontoUnitario;
+        } else {
+          // Adiciona novo produto ao carrinho existente
+          carrinhoAtivo.produtos.push(produtoCart);
         }
 
-        const carrinho_Custumer = await Cart.find({ "consumidor.id": custumer_id });
+        // Atualiza totais do carrinho
+        carrinhoAtivo.ItensTotal = carrinhoAtivo.produtos.reduce(
+          (total, prod) => total + prod.quantidade, 0
+        );
+        
+        carrinhoAtivo.valorTotal = carrinhoAtivo.produtos.reduce(
+          (total, prod) => total + prod.precoTotal, 0
+        );
+        
+        carrinhoAtivo.valor_de_Desconto = carrinhoAtivo.produtos.reduce(
+          (total, prod) => total + (prod.desconto || 0), 0
+        );
 
+        // Adiciona registro no histórico
+        carrinhoAtivo.historico.push({
+          acao: produtoExistenteIndex >= 0 
+            ? `Quantidade do produto ${produtoBody.title} incrementada (+1)` 
+            : `Produto ${produtoBody.title} adicionado ao carrinho`,
+          data: new Date()
+        });
 
-
-      if (!consumidor || !consumidor._id || !consumidor.taxId || !consumidor.name) {
-        return res.status(400).json({
-          success: false,
-          message: "Dados do consumidor são obrigatórios",
+        const carrinhoAtualizado = await carrinhoAtivo.save();
+        
+        return res.status(200).json({
+          success: true,
+          message: produtoExistenteIndex >= 0 
+            ? "Quantidade do produto incrementada em 1 unidade" 
+            : "Produto adicionado ao carrinho existente",
+          data: carrinhoAtualizado
         });
       }
-      const produtos = [{}]
-
-      if (!produtos || produtos.length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: "O carrinho deve conter pelo menos um produto",
-        });
-      }
-
-        if (!carrinho_Custumer) {
-            const carrinho = {
-
-            }
-          }
-
-        console.log(custumer_id)
-        console.log(req.body)
     } catch (error) {
+      console.error("Erro ao adicionar produto:", error);
       return res.status(500).json({
         success: false,
         message: "Erro interno ao adicionar produto ao carrinho",
@@ -198,65 +250,269 @@ const cartController = {
     }
   },
 
-  removeProduto: async (req: Request, res: Response) => {
+  RemoveProductFromCart: async (req: Request, res: Response) => {
     try {
-      const { id, produtoId } = req.params;
+      const custumer_id = req.headers['id'] as string | undefined;
+      const produtoBody = req.body; // Produto recebido do frontend
 
-      // Busca o carrinho
-      const carrinho = await Cart.findById(id);
-      if (!carrinho) {
-        return res.status(404).json({
+
+      // Verifica se o ID do cliente foi fornecido
+      if (!custumer_id) {
+        return res.status(400).json({
           success: false,
-          message: "Carrinho não encontrado",
+          message: "ID do cliente é obrigatório",
         });
       }
 
-      // Filtra os produtos removendo o produto especificado
-      const produtosAtualizados = carrinho.produtos.filter(p => p._id !== produtoId);
+      // Busca o carrinho ativo do cliente
+      const carrinhoAtivo = await Cart.findOne({ 
+        "consumidor.id": custumer_id,
+        "status_Cart": { $ne: "finalizado" }
+      });
 
-      // Se não houve alteração, o produto não existia no carrinho
-      if (produtosAtualizados.length === carrinho.produtos.length) {
-        return res.status(404).json({
+      if (!carrinhoAtivo) {
+        return res.status(404).json({ 
           success: false,
-          message: "Produto não encontrado no carrinho",
+          message: "Carrinho ativo não encontrado para este cliente" 
         });
       }
 
-      // Atualiza o carrinho
-      carrinho.produtos = produtosAtualizados;
+      // Encontra o índice do produto no carrinho
+      const produtoIndex = carrinhoAtivo.produtos.findIndex(
+        p => p._id === produtoBody.id
+      );
+
+      if (produtoIndex === -1) {
+        return res.status(404).json({ 
+          success: false,
+          message: "Produto não encontrado no carrinho" 
+        });
+      }
+
+      // Armazena informações do produto para o histórico
+      const produtoRemovido = carrinhoAtivo.produtos[produtoIndex];
       
-      // Recalcula totais
-      carrinho.ItensTotal = carrinho.produtos.reduce(
-        (total, p) => total + p.quantidade,
-        0
+      // Remove o produto do array
+      carrinhoAtivo.produtos.splice(produtoIndex, 1);
+
+      // Atualiza totais do carrinho
+      carrinhoAtivo.ItensTotal = carrinhoAtivo.produtos.reduce(
+        (total, prod) => total + prod.quantidade, 0
       );
-      carrinho.valorTotal = carrinho.produtos.reduce(
-        (total, p) => total + (p.preco_de_Venda * p.quantidade - p.desconto),
-        0
+      
+      carrinhoAtivo.valorTotal = carrinhoAtivo.produtos.reduce(
+        (total, prod) => total + prod.precoTotal, 0
+      );
+      
+      carrinhoAtivo.valor_de_Desconto = carrinhoAtivo.produtos.reduce(
+        (total, prod) => total + (prod.desconto || 0), 0
       );
 
-      // Adiciona ao histórico
-      carrinho.historico.push({
-        acao: `Produto ${produtoId} removido`,
+      // Adiciona registro no histórico
+      carrinhoAtivo.historico.push({
+        acao: `Produto ${produtoRemovido.nome} removido completamente do carrinho`,
         data: new Date()
       });
 
-      // Salva as alterações
-      const carrinhoAtualizado = await carrinho.save();
+      // Se não houver mais produtos, atualiza o status para "vazio" ou similar
+      if (carrinhoAtivo.produtos.length === 0) {
+        carrinhoAtivo.status_Cart = "vazio";
+        carrinhoAtivo.historico.push({
+          acao: "Carrinho esvaziado",
+          data: new Date()
+        });
+      }
 
+      const carrinhoAtualizado = await carrinhoAtivo.save();
+      
       return res.status(200).json({
         success: true,
         message: "Produto removido do carrinho com sucesso",
-        data: carrinhoAtualizado,
+        data: {
+          carrinho: carrinhoAtualizado,
+          produtoRemovido: produtoRemovido
+        }
       });
     } catch (error) {
+      console.error("Erro ao remover produto:", error);
       return res.status(500).json({
         success: false,
         message: "Erro interno ao remover produto do carrinho",
         error: error instanceof Error ? error.message : "Erro desconhecido",
       });
     }
-  }
+  },
+  increaseProductQuantity: async (req: Request, res: Response) => {
+    try {
+      const custumer_id = req.headers['id'] as string | undefined;
+      const produtoBody = req.body;
+      
+      if (!custumer_id) {
+        return res.status(400).json({
+          success: false,
+          message: "ID do cliente é obrigatório",
+        });
+      }
+
+      // Busca carrinho ativo
+      const carrinhoAtivo = await Cart.findOne({ 
+        "consumidor.id": custumer_id,
+        "status_Cart": { $ne: "finalizado" }
+      });
+
+      if (!carrinhoAtivo) {
+        return res.status(404).json({ 
+          success: false,
+          message: "Carrinho ativo não encontrado" 
+        });
+      }
+
+      // Encontra o produto no carrinho
+      const produtoIndex = carrinhoAtivo.produtos.findIndex(
+        p => p._id === produtoBody.id
+      );
+
+      if (produtoIndex === -1) {
+        return res.status(404).json({ 
+          success: false,
+          message: "Produto não encontrado no carrinho" 
+        });
+      }
+
+      // Incrementa a quantidade
+      carrinhoAtivo.produtos[produtoIndex].quantidade += 1;
+      
+      // Recalcula o preço total do produto
+      const precoUnitario = carrinhoAtivo.produtos[produtoIndex].preco_de_Venda;
+      const descontoUnitario = carrinhoAtivo.produtos[produtoIndex].desconto || 0;
+      carrinhoAtivo.produtos[produtoIndex].precoTotal = 
+        (precoUnitario * carrinhoAtivo.produtos[produtoIndex].quantidade) - descontoUnitario;
+
+      // Atualiza totais do carrinho
+      carrinhoAtivo.ItensTotal = carrinhoAtivo.produtos.reduce(
+        (total, prod) => total + prod.quantidade, 0
+      );
+      
+      carrinhoAtivo.valorTotal = carrinhoAtivo.produtos.reduce(
+        (total, prod) => total + prod.precoTotal, 0
+      );
+      
+      carrinhoAtivo.valor_de_Desconto = carrinhoAtivo.produtos.reduce(
+        (total, prod) => total + (prod.desconto || 0), 0
+      );
+
+      // Registra no histórico
+      carrinhoAtivo.historico.push({
+        acao: `Quantidade do produto ${carrinhoAtivo.produtos[produtoIndex].nome} aumentada para ${carrinhoAtivo.produtos[produtoIndex].quantidade}`,
+        data: new Date()
+      });
+
+      const carrinhoAtualizado = await carrinhoAtivo.save();
+      
+      return res.status(200).json({
+        success: true,
+        message: "Quantidade do produto aumentada com sucesso",
+        data: carrinhoAtualizado
+      });
+    } catch (error) {
+      console.error("Erro ao aumentar quantidade:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Erro interno ao aumentar quantidade do produto",
+        error: error instanceof Error ? error.message : "Erro desconhecido",
+      });
+    }
+  },
+  decreaseProductQuantity: async (req: Request, res: Response) => {
+    try {
+      const custumer_id = req.headers['id'] as string | undefined;
+      const produtoBody = req.body;
+      
+      if (!custumer_id) {
+        return res.status(400).json({
+          success: false,
+          message: "ID do cliente é obrigatório",
+        });
+      }
+
+      // Busca carrinho ativo
+      const carrinhoAtivo = await Cart.findOne({ 
+        "consumidor.id": custumer_id,
+        "status_Cart": { $ne: "finalizado" }
+      });
+
+      if (!carrinhoAtivo) {
+        return res.status(404).json({ 
+          success: false,
+          message: "Carrinho ativo não encontrado" 
+        });
+      }
+
+      // Encontra o produto no carrinho
+      const produtoIndex = carrinhoAtivo.produtos.findIndex(
+        p => p._id === produtoBody.id
+      );
+
+      if (produtoIndex === -1) {
+        return res.status(404).json({ 
+          success: false,
+          message: "Produto não encontrado no carrinho" 
+        });
+      }
+
+      // Verifica se a quantidade atual é maior que 1
+      if (carrinhoAtivo.produtos[produtoIndex].quantidade <= 1) {
+        return res.status(400).json({
+          success: false,
+          message: "Quantidade mínima já atingida (1 unidade)",
+          data: carrinhoAtivo
+        });
+      }
+
+      // Decrementa a quantidade
+      carrinhoAtivo.produtos[produtoIndex].quantidade -= 1;
+      
+      // Recalcula o preço total do produto
+      const precoUnitario = carrinhoAtivo.produtos[produtoIndex].preco_de_Venda;
+      const descontoUnitario = carrinhoAtivo.produtos[produtoIndex].desconto || 0;
+      carrinhoAtivo.produtos[produtoIndex].precoTotal = 
+        (precoUnitario * carrinhoAtivo.produtos[produtoIndex].quantidade) - descontoUnitario;
+
+      // Atualiza totais do carrinho
+      carrinhoAtivo.ItensTotal = carrinhoAtivo.produtos.reduce(
+        (total, prod) => total + prod.quantidade, 0
+      );
+      
+      carrinhoAtivo.valorTotal = carrinhoAtivo.produtos.reduce(
+        (total, prod) => total + prod.precoTotal, 0
+      );
+      
+      carrinhoAtivo.valor_de_Desconto = carrinhoAtivo.produtos.reduce(
+        (total, prod) => total + (prod.desconto || 0), 0
+      );
+
+      // Registra no histórico
+      carrinhoAtivo.historico.push({
+        acao: `Quantidade do produto ${carrinhoAtivo.produtos[produtoIndex].nome} diminuída para ${carrinhoAtivo.produtos[produtoIndex].quantidade}`,
+        data: new Date()
+      });
+
+      const carrinhoAtualizado = await carrinhoAtivo.save();
+      
+      return res.status(200).json({
+        success: true,
+        message: "Quantidade do produto diminuída com sucesso",
+        data: carrinhoAtualizado
+      });
+    } catch (error) {
+      console.error("Erro ao diminuir quantidade:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Erro interno ao diminuir quantidade do produto",
+        error: error instanceof Error ? error.message : "Erro desconhecido",
+      });
+    }
+  },
 };
 
 export default cartController;

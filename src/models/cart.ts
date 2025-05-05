@@ -33,6 +33,14 @@ interface IProdutoCart {
   end?: string;
   categoria?: string;
   status: string;
+  imgs: {
+    thumbnails: [
+      string
+    ],
+    previews: [
+      string
+    ]
+  },
 }
 
 interface ICart extends Document {
@@ -55,8 +63,7 @@ interface ICart extends Document {
   ItensTotal: number;
   produtos: IProdutoCart[];
   valorTotal: number;
-  valorTroco?: number;
-  valor_de_Desconto: number;
+   valor_de_Desconto: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -106,9 +113,16 @@ const cartSchema = new Schema<ICart>(
       estoque: { type: Number, required: false },
  
       categoria: { type: String, required: false },
+      imgs: {
+        thumbnails: [
+         { type: String, required: false}
+        ],
+        previews: [
+         { type: String, required: false}
+        ]
+      },
     }],
     valorTotal: { type: Number, required: true },
-    valorTroco: { type: Number, required: false },
     valor_de_Desconto: { type: Number, required: true },
  
   },
