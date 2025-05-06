@@ -162,8 +162,26 @@ const venda_Schema = {
        
        
   
-        // Busca os carrinhos do consumidor
-        const Order = await Venda.find({ "consumidor.id": custumer_id });
+      const Order = await Venda.find({ "consumidor.id": custumer_id });
+       
+        
+        return res.status(200).json(Order);
+      } catch (error) {
+        return res.status(500).json({
+          success: false,
+          message: "Erro interno ao buscar Order do consumidor",
+          error: error instanceof Error ? error.message : "Erro desconhecido",
+        });
+      }
+    },
+    getByOrderEmitente: async (req: Request, res: Response) => {
+      try {
+        const emitente_id = req.headers['user_store_id'] as string | undefined;
+        
+       
+       
+  
+      const Order = await Venda.find({ "emitente._id": emitente_id });
        
         
         return res.status(200).json(Order);
@@ -181,8 +199,7 @@ const venda_Schema = {
         
        
   
-        // Busca os carrinhos do consumidor
-        const Order = await Venda.findById(venda_id);
+      const Order = await Venda.findById(venda_id);
         
         
         return res.status(200).json(Order);

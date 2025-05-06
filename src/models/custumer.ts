@@ -76,7 +76,7 @@ const transactionHistorySchema = new Schema<ITransactionHistory>({
 });
 
 const customerSchema = new Schema<ICustomer>({
-    _id:{type:Schema.Types.ObjectId},
+   
     name: {
         type: String,
         required: [true, 'Customer name is required'],

@@ -85,7 +85,7 @@ const customerController = {
         tier: tier || 'regular',
         store,
         endereco,
-        // Valores padrão
+        
         creditBalance: 0,
         cashbackBalance: 0,
         monthlyPurchases: [],

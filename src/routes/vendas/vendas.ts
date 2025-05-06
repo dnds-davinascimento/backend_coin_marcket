@@ -12,6 +12,10 @@ router.route("/getByOrderConsumidor").get(
 
     (req: Request, res: Response) => vendaControllers.getByConsumidor(req, res)
   );
+router.route("/getByOrderEmitente").get(
+
+    (req: Request, res: Response) => vendaControllers.getByOrderEmitente(req, res)
+  );
 router.route("/getOrderDetails/:id").get(
 
     (req: Request, res: Response) => vendaControllers.getOrderDetails(req, res)
