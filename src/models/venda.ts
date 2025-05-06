@@ -8,7 +8,12 @@ interface IEndereco {
   estado: string;
   cep: string;
 }
-
+interface IEstagioProcesso {
+  usuario: string;
+  data: Date;
+  acao: string;
+  tempo_do_processo?: string;
+}
 interface IFormaPagamento {
   metodo: string;
   pagar_no_local: boolean;
@@ -38,7 +43,6 @@ interface IProdutoVenda {
   categoria?: string;
   status: string;
   qt_devolucao: number;
-  produto_de_rota: boolean;
   produto_servico: boolean;
 }
 
@@ -64,11 +68,11 @@ interface IVenda extends Document {
   };
   formas_de_pagamento_array: IFormaPagamento[];
   Numero_da_nota?: number;
-  id_da_Entrega?: string;
   quantidade_de_parcelas?: number;
   status_venda?: string;
   descricao?: string;
   historico: IHistorico[];
+  estagio_do_processo: IEstagioProcesso[];
   ItensTotal: number;
   produtos: IProdutoVenda[];
   valorTotal: number;
@@ -124,8 +128,13 @@ const vendaSchema = new Schema<IVenda>(
       status: { type: String },
       valor: { type: Number }
     }],
+    estagio_do_processo: [{ // Padronize para este nome
+      usuario: { type: String, required: true },
+      data: { type: Date, required: true },
+      acao: { type: String, required: true },
+      tempo_do_processo: { type: String, required: true },
+    }],
     Numero_da_nota: { type: Number },
-    id_da_Entrega: { type: String },
     quantidade_de_parcelas: { type: Number, required: false },
     status_venda: { type: String },
     descricao: { type: String },

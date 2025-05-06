@@ -1,6 +1,6 @@
 import { Router } from "express";
 import produtoRouter from "./produtos/produtos";
-import vendaRouter from "./vendas/vendas";
+import vendaRouter from "./vendas/vendas"
 import adminRouter from "./admin/admin";
 import loginRouter from "./login/login";
 import webhookRouter from "./webhook/webhook"
@@ -15,7 +15,6 @@ const router: Router = Router();
 
 // Usando as rotas importadas
 router.use("/", produtoRouter);
-router.use("/", vendaRouter);
 router.use("/", adminRouter);
 router.use("/", loginRouter);
 router.use("/", webhookRouter);
@@ -24,6 +23,7 @@ router.use("/" , usersRouter)
 router.use("/", lojaRouter);
 router.use("/", categoriaRouter);
 router.use("/",cartRouter);
+router.use("/",vendaRouter);
 
 
 

@@ -11,7 +11,7 @@ const userController = {
   // Registrar um novo usuário (admin ou padrão)
   registerUser: async (req: Request, res: Response): Promise<void> => {
     const id_loja = req.headers.id as string;
-    console.log("ID da loja:", id_loja); // Log do ID da loja recebido no cabeçalho
+  
     
     
   const loja = await Loja.findById(id_loja); // Busca a loja pelo ID

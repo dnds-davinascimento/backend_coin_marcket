@@ -3,7 +3,6 @@ import { Customer } from "../models/custumer"; // Importa o model Customer
 import { Loja } from "../models/loja"; // Importa o model Loja
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
-import { get } from "axios";
 
 dotenv.config();
 
@@ -139,8 +138,7 @@ const customerController = {
   updateCustomer: async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
     const { name, email, password, type, indicatorStateRegistration, phone, taxId, stateRegistration, tier,endereco,thumbnail } = req.body;
-    console.log("Dados recebidos para atualização:", req.body); // Log dos dados recebidos
-    console.log("ID do cliente:", id); // Log do ID do cliente
+
     try {
       const customer = await Customer.findById(id);
       if (!customer) {

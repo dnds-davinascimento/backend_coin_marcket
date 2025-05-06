@@ -1,173 +1,199 @@
 import { Request, response, Response } from "express";
-import axios from "axios";
-import dotenv from "dotenv";
-import Admin from "../models/Admin"; // Importa o model Admin
-
-import authService from "../services/authService";
-
-import nodemailer from "nodemailer";
-
-import User from "../models/user";
-
-
-
-
-dotenv.config(); // Carregar as variáveis de ambiente
-// Função para o envio de e-mail
-/* const sendEmail = async (order: Order, emails: string[]) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: "venda.croi.ns@gmail.com",
-      pass: "dehq eejp kpql xcjc",
-    },
-  });
-
-  const mailOptions = {
-    from: "venda.croi.ns@gmail.com",
-    to: emails,
-    subject: `Novo Pedido Recebido: #${order.sequencia_ideal}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; color: #333; background-color: #f4f4f4; padding: 20px;">
-        <h2 style="color: #0b3d91;">Detalhes do Pedido</h2>
-        <span style="color: #0b3d91;">Essa é um envio de email quando for confirmado um pagamento pela nuvemshop.</span>
-        <p><strong>ID do Pedido:</strong> ${order.order_id_Nuvem}</p>
-        <p><strong>N° Sequencia Gerada:</strong> ${order.sequencia_ideal}</p>
-        <p><strong>Status:</strong> ${order.status}</p>
-        <p><strong>Total:</strong> R$ ${order.total}</p>
-        <h2 style="color: #0b3d91;">Cliente:${order.name} Cpf/Cnpj:${order.cpfCnpj}</h2>
-        <h3>Produtos:</h3>
-        <ul style="list-style-type: none; padding-left: 0;">
-          ${order.products.map(product => `
-            <li style="margin-bottom: 10px;">
-              <strong>${product.productId}</strong>-${product.name} - Quantidade: ${product.quantity} - Preço Unitário: R$ ${product.price}
-            </li>
-          `).join('')}
-        </ul>
-        <h3>Detalhes de Pagamento:</h3>
-        <p><strong>Forma de Pagamento:</strong> ${order.paymentDetails.method}</p>
-        <p><strong>Parcelas:</strong> ${order.paymentDetails.installments}</p>
-        <h3>Endereço de Envio:</h3>
-        <p><strong>Endereço:</strong> ${order.shippingAddress.address}, ${order.shippingAddress.city}, ${order.shippingAddress.province} - ${order.shippingAddress.zipcode}</p>
-      </div>
-    `,
-  };
-
-  try {
-    const info = await transporter.sendMail(mailOptions);
-
-  } catch (error) {
-    console.error("Erro ao enviar e-mail: ", error);
-  }
-}; */
-// Função para enviar E-mail quando der erro na criação de venda na Idealsoft
-/* const sendEmailError = async (emails: string[], error: any, orderdb: Order) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: "venda.croi.ns@gmail.com",
-      pass: "dehq eejp kpql xcjc",
-    },
-  });
-  const mailOptions = {
-    from: "venda.croi.ns@gmail.com",
-    to: emails,
-    subject: "Erro ao criar venda na Idealsoft",
-    html: `
-      <div style="font-family: Arial, sans-serif; color: #333; background-color: #f4f4f4; padding: 20px;">
-        <h2 style="color: #0b3d91;">Erro ao criar venda na Idealsoft</h2>
-        <p><strong>Erro:</strong> ${error}</p>
-        <h3>Detalhes do Pedido:</h3>
-        <p><strong>ID do Pedido:</strong> ${orderdb._id}</p>
-        <p><strong>Nome do Cliente:</strong> ${orderdb.name}</p>
-        <p><strong>Cpf/Cnpj:</strong> ${orderdb.cpfCnpj}</p>
-        <p><strong>Total:</strong> R$ ${orderdb.total}</p>
-        <h3>Produtos:</h3>
-        <ul style="list-style-type: none; padding-left: 0;">
-          ${orderdb.products.map(product => `
-            <li style="margin-bottom: 10px;">
-              <strong>${product._id}</strong>-${product.name} - Quantidade: ${product.quantity} - Preço Unitário: R$ ${product.price}
-            </li>
-          `).join('')}
-        </ul>
-        <h3>Detalhes de Pagamento:</h3>
-        <p><strong>Forma de Pagamento:</strong> ${orderdb.paymentDetails.method}</p>
-        <p><strong>Parcelas:</strong> ${orderdb.paymentDetails.installments}</p>
-        <h3>Endereço de Envio:</h3>
-        <p><strong>Endereço:</strong> ${orderdb.shippingAddress.address}, ${orderdb.shippingAddress.city}, ${orderdb.shippingAddress.province} - ${orderdb.shippingAddress.zipcode}</p>
-      </div>
-     
-    `,
-  };
-
-  try {
-    const info = await transporter.sendMail(mailOptions);
-
-  } catch (error) {
-    console.error("Erro ao enviar e-mail: ", error);
-  }
-}; */
-
-
-interface FormatUF {
-  (uf: string): string;
+import { Venda } from "../models/venda";
+import { Loja } from "../models/loja";
+import { Customer } from "../models/custumer"; // Importa o model Customer
+import { Cart, IProdutoCart } from "../models/cart";
+interface IHistorico {
+  usuario?: string;
+  data: Date;
+  acao: string;
+}
+interface IEstagioProcesso {
+  usuario: string;
+  data: Date;
+  acao: string;
+  tempo_do_processo?: string;
 }
 
-const formatarUF: FormatUF = (uf) => {
-  // Mapeamento dos estados para suas respectivas siglas
-  const estados: { [key: string]: string } = {
-    "ACRE": "AC",
-    "ALAGOAS": "AL",
-    "AMAPA": "AP",            // Removi o acento
-    "AMAZONAS": "AM",
-    "BAHIA": "BA",
-    "CEARA": "CE",            // Removi o acento
-    "DISTRITO FEDERAL": "DF",
-    "ESPIRITO SANTO": "ES",   // Removi o acento
-    "GOIAS": "GO",            // Removi o acento
-    "MARANHAO": "MA",         // Removi o acento
-    "MATO GROSSO": "MT",
-    "MATO GROSSO DO SUL": "MS",
-    "MINAS GERAIS": "MG",
-    "PARA": "PA",             // Removi o acento
-    "PARAIBA": "PB",          // Removi o acento
-    "PARANA": "PR",           // Removi o acento
-    "PERNAMBUCO": "PE",
-    "PIAUI": "PI",            // Removi o acento
-    "RIO DE JANEIRO": "RJ",
-    "RIO GRANDE DO NORTE": "RN",
-    "RIO GRANDE DO SUL": "RS",
-    "RONDONIA": "RO",         // Removi o acento
-    "RORAIMA": "RR",
-    "SANTA CATARINA": "SC",
-    "SAO PAULO": "SP",        // Removi o acento
-    "SERGIPE": "SE",
-    "TOCANTINS": "TO"
-  };
 
-  // Remove acentos e converte para maiúsculo
-  const ufFormatado = uf.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
 
-  // Verifica se o valor é o nome completo do estado (sem acentos) e retorna a sigla correspondente
-  if (estados[ufFormatado]) {
-    return estados[ufFormatado];
-  }
-
-  // Caso já seja uma sigla, retorna a sigla como está
-  return ufFormatado;
-};
 
 const venda_Schema = {
+  createOrder: async (req: Request, res: Response) => {
+    try {
+      let custumerId = req.headers.id;
+      
 
- 
+      const custumer = await Customer.findById(custumerId);
+     
+      if (!custumer) {
+        return res.status(404).json({ msg: "Cliente não encontrado" });
+      }
 
- 
+      let emitenteId = req.headers.emitenteId as string;
+      if (!emitenteId) {
+        emitenteId = "6807ab4fbaead900af4db229";
+      }
+
+      const emitente = await Loja.findById(emitenteId);
+     
+      if (!emitente) {
+        return res.status(404).json({ msg: "Emitente não encontrado" });
+      }
+
+      
+
+      // Mapear endereço do cliente
+      const enderecoConsumidor = custumer.endereco.map(end => ({
+        logradouro: end.logradouro,
+        numero: end.numero,
+        bairro: end.bairro,
+        descricaoCidade: end.descricaoCidade,
+        estado: end.estado,
+        cep: end.cep
+      }));
+
+      // Mapear endereço do emitente
+      const enderecoEmitente = emitente.endereco?.map(end => ({
+        logradouro: end.logradouro,
+        numero: end.numero,
+        bairro: end.bairro,
+        descricaoCidade: end.descricaoCidade || "Cidade não informada", // fallback
+        estado: end.estado,
+        cep: end.cep
+      }));
 
 
 
+      // Criar registro de histórico
+      const historicoInicial: IHistorico = {
+        data: new Date(),
+        acao: "Pedido criado",
+        usuario: custumer.name || "Cliente"
+      };
+      // Criar estágio do processo inicial
+      const estagioInicial:IEstagioProcesso = {
+        usuario: custumer.name || "Sistema",
+        data: new Date(),
+        acao: "Pedido recebido - Em análise",
+        tempo_do_processo: "0 minutos"
+      };
+
+      // Criar objeto da venda
+      const vendaData = {
+        emitente: {
+          _id: emitente._id,
+          cnpj: emitente.cnpj.toString(),
+          razao_social: emitente.razao_social,
+          regime_tributario: emitente.regime_tributario,
+          endereco: enderecoEmitente
+        },
+        consumidor: {
+          id: custumer._id.toString(),
+          cpf: custumer.taxId,
+          nome: custumer.name,
+          email: custumer.email,
+          contato: custumer.phone,
+          endereco: enderecoConsumidor
+        },
+        formas_de_pagamento_array: [{
+          metodo: "A definir", // Pode ser ajustado conforme seu fluxo
+          pagar_no_local: false,
+          valor: req.body.valorTotal,
+          status: "pendente"
+        }],
+        Numero_da_nota: undefined, // Será gerado posteriormente
+        status_venda: "em analize",
+        descricao: "Pedido criado pelo cliente",
+        historico: [historicoInicial],
+        estagio_do_processo: [estagioInicial],
+        ItensTotal: req.body.ItensTotal,
+        produtos: req.body.produtos.map((prod: any) => ({
+          ...prod,
+          status: "vendido",
+          qt_devolucao: 0,
+          produto_servico: false
+        })),
+        valorTotal: req.body.valorTotal,
+        valor_de_Desconto: req.body.valor_de_Desconto,
+        prazo_de_entrega: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Padrão: 7 dias a partir de agora
+      };
+     
+      // Criar e salvar a venda no banco de dados
+      const novaVenda = new Venda(vendaData);
+      const vendaSalva = await novaVenda.save();
 
 
- 
+      const cart = await Cart.findOne({ 'consumidor.id': custumerId });
+
+      if (cart) {
+        cart.produtos = [];
+        cart.ItensTotal = 0;
+        cart.valorTotal = 0;
+        cart.valor_de_Desconto = 0;
+        cart.status_Cart = "finalizado";
+        
+        cart.historico.push({
+          data: new Date(),
+          acao: "Carrinho limpo após criação de venda",
+          usuario: "Sistema"
+        });
+      
+        await cart.save();
+      }
+      return res.status(201).json({
+        success: true,
+        message: "Pedido criado com sucesso",
+        venda: vendaSalva
+      });
+
+    } catch (error) {
+      console.error("Erro ao criar venda:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Erro ao processar o pedido",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  },
+   getByConsumidor: async (req: Request, res: Response) => {
+      try {
+        const custumer_id = req.headers['id'] as string | undefined;
+       
+       
+  
+        // Busca os carrinhos do consumidor
+        const Order = await Venda.find({ "consumidor.id": custumer_id });
+       
+        
+        return res.status(200).json(Order);
+      } catch (error) {
+        return res.status(500).json({
+          success: false,
+          message: "Erro interno ao buscar Order do consumidor",
+          error: error instanceof Error ? error.message : "Erro desconhecido",
+        });
+      }
+    },
+    getOrderDetails: async (req: Request, res: Response) => {
+      try {
+        const venda_id = req.params.id
+        
+       
+  
+        // Busca os carrinhos do consumidor
+        const Order = await Venda.findById(venda_id);
+        
+        
+        return res.status(200).json(Order);
+      } catch (error) {
+        return res.status(500).json({
+          success: false,
+          message: "Erro interno ao buscar Order do consumidor",
+          error: error instanceof Error ? error.message : "Erro desconhecido",
+        });
+      }
+    },
 };
 
 export default venda_Schema;

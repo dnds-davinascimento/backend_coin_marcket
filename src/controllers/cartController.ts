@@ -1,44 +1,8 @@
 import { Request, Response } from "express";
-import mongoose, { Types } from "mongoose";
+import mongoose from "mongoose";
 import { Cart, IProdutoCart } from "../models/cart";
 import { Customer } from "../models/custumer";
-
-interface CartBody {
-  emitente: {
-    _id: string;
-    cnpj: string;
-    razao_social: string;
-  };
-  consumidor?: {
-    id?: string;
-    cpf?: string;
-    nome?: string;
-    email?: string;
-    contato?: string;
-    endereco?: {
-      logradouro: string;
-      numero: string;
-      bairro: string;
-      descricaoCidade: string;
-      estado: string;
-      cep: string;
-    }[];
-  };
-  vendedor?: {
-    nome?: string;
-    id?: string;
-  };
-  status_Cart?: string;
-  descricao?: string;
-  produtos: IProdutoCart[];
-  valorTotal: number;
-  valorTroco?: number;
-  valor_de_Desconto: number;
-}
-
 const cartController = {
-
-
   getById: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -157,8 +121,8 @@ const cartController = {
 
       // Busca carrinhos ativos do cliente (status diferente de finalizado)
       let carrinhoAtivo = await Cart.findOne({ 
-        "consumidor.id": custumer_id,
-        "status_Cart": { $ne: "finalizado" }
+        "consumidor.id": custumer_id
+        
       });
 
       if (!carrinhoAtivo) {
