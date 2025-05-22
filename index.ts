@@ -6,6 +6,7 @@ import connectDB from './src/config/db';
 import swaggerUi from 'swagger-ui-express';
 import swaggerDocs from './swaggerConfig';
 import basicAuth from 'express-basic-auth';
+import cookieParser from 'cookie-parser';
 /* import agenda from './src/agenda/agenda' */
 
 
@@ -14,6 +15,8 @@ dotenv.config();
 
 // Inicializa o app Express
 const app = express();
+// Middleware para lidar com cookies
+app.use(cookieParser());
 
 
 
@@ -39,9 +42,14 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'], // Permite os cabeçalhos necessários
 };
 
-
+const corsOrigins = [
+  'http://localhost:3000',]
 // Configura o CORS para permitir requisições da origem do frontend
-app.use(cors());
+app.use(cors({
+  origin: corsOrigins,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
+}));
 // Middleware para lidar com as solicitações OPTIONS
 app.options("/api*", cors());
 

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import cartControllers from "../../controllers/cartController";  // Controller de clientes
-
+import { checkToken, permissionsMiddleware } from '../../middlewares/checkToken'; 
 const router: Router = Router();
 
 
@@ -61,18 +61,28 @@ const router: Router = Router();
  */
 
 router.route("/addProduto").post(
+      checkToken,
+  permissionsMiddleware('cart'),
     (req: Request, res: Response) => cartControllers.addProduto(req, res)
   );
 router.route("/getByConsumidor").get(
+    checkToken,
+  permissionsMiddleware('cart'),
     (req: Request, res: Response) => cartControllers.getByConsumidor(req, res)
   );
 router.route("/RemoveProductFromCart").put(
+    checkToken,
+  permissionsMiddleware('cart'),
     (req: Request, res: Response) => cartControllers.RemoveProductFromCart(req, res)
   );
 router.route("/decreaseProductQuantity").put(
+    checkToken,
+  permissionsMiddleware('cart'),
     (req: Request, res: Response) => cartControllers.decreaseProductQuantity(req, res)
   );
 router.route("/increaseProductQuantity").put(
+    checkToken,
+  permissionsMiddleware('cart'),
     (req: Request, res: Response) => cartControllers.increaseProductQuantity(req, res)
   );
 

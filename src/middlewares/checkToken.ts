@@ -17,8 +17,8 @@ const checkToken = async (
   config();
 
   // Extrair o token do header Authorization
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+  const token = req.cookies.token;
+
 
   if (!token) {
     res.status(401).json({ msg: "Token não fornecido" });
@@ -46,8 +46,8 @@ const checkToken = async (
 // Middleware para verificar as permissões de um usuário em relação a um recurso específico
 const permissionsMiddleware = (recurso: string) => {
   return (req: CustomRequest, res: Response, next: NextFunction): void => {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
+    const token = req.cookies.token;
+
     
 
     if (!token) {

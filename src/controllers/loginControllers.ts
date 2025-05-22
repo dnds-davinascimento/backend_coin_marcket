@@ -35,29 +35,15 @@ const loginController = {
         res.status(400).json({ msg: 'Senha ou Email incorretos.' });
         return;
       }
-      
+
       const checkPassword = await bcrypt.compare(password, user.password);
       if (!checkPassword) {
         res.status(400).json({ msg: 'Senha ou Email incorretos.' });
         return;
       }
-      let user_store_id = null;
-      
-      // Para Users
-      if (existingUser) {
-        user_store_id = existingUser.user_store_id;
-      } 
-      // Para Admins
-      else if (existingAdmin) {
-        // CORREÇÃO AQUI: Usar findOne em vez de findById
-        const lojaExistente = await Loja.findOne({ criadoPor: existingAdmin._id });
-        
-        if (!lojaExistente) {
-          res.status(404).json({ msg: "Loja não encontrada para este admin." });
-          return;
-        }
-        user_store_id = lojaExistente._id;
-      }
+      let user_store_id = "6807ab4fbaead900af4db229";
+
+
       // Criar payload sem a senha
       const payload = {
         type: existingAdmin ? 'admin' : existingUser ? 'user' : 'customer',
@@ -71,17 +57,25 @@ const loginController = {
         isCustomer: existingCustomer ? true : false,
         isUser: existingUser ? true : false,
       };
-
       
-     
+
+
+
       const secret = process.env.JWT_SECRET as string;
       const token = jwt.sign(payload, secret);
-    
-      res.status(200).json({ 
-        token, 
-        user: payload,
-        userType: existingAdmin ? 'admin' : existingUser ? 'user' : 'customer'
-      });
+
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production", // garante que em produção só via HTTPS
+        sameSite: "strict", // previne CSRF
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
+      })
+        .status(200)
+        .json({
+          user: payload,
+          userType: existingAdmin ? 'admin' : existingUser ? 'user' : 'customer'
+        });
+
     } catch (error) {
       console.log(error);
       res.status(500).json({ msg: 'Erro no servidor, tente novamente mais tarde.' });
