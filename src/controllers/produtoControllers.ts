@@ -213,7 +213,7 @@ const produto_Schema = {
     } = req.body.produto as IProdutoBody;
    
     
-    const id_loja = req.headers.id as string;
+    const id_loja = req.headers.user_store_id as string;
     
 
 

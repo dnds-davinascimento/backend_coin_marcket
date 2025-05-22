@@ -21,7 +21,7 @@ const categoriaSchema = {
     create: async (req: Request, res: Response) => {
         try {
             /* id da loja nos headers */
-            const lojaId = req.headers.id as string;
+            const lojaId = req.headers.user_store_id as string;
 
             const { nome ,categoriaDestaque,img_url}: CategoriaBody = req.body;
 
@@ -76,7 +76,7 @@ const categoriaSchema = {
     getByLoja: async (req: Request, res: Response) => {
         try {
             
-            let lojaId = req.headers.id as string;
+            let lojaId =req.headers.user_store_id as string;
             if (!lojaId) {
              lojaId = "6807ab4fbaead900af4db229"
             }
