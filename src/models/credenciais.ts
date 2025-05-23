@@ -6,11 +6,11 @@ export interface Credenciais extends Document {
   serie: string;
   codFilial: string;
   senha: string;
-  credencial_user_id: string;
+  credencial_loja_id: string;
 }
 
 const credenciaisSchema: Schema = new Schema({
-  credencial_user_id: { type: Schema.Types.ObjectId, ref: "CredencialUser", required: true },
+  credencial_loja_id: { type: Schema.Types.ObjectId, ref: "CredencialUser", required: true },
   api: { type: String, required: true },
   serie: { type: String, required: true },
   codFilial: { type: String, required: true },

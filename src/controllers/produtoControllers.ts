@@ -1,12 +1,15 @@
 import { Request, Response } from "express";
 import dotenv from "dotenv";
 import { Types } from "mongoose";
-
-
+import User from "../models/user";
 import nodemailer from "nodemailer";
-import { create } from "axios";
+import axios from "axios";
 import { Produto } from "../models/product";
 import { Loja } from "../models/loja";
+import { obterCredenciais } from "../services/credenciaisService";
+import { generateSignature } from "../services/generateSignature";
+import authService from "../services/authService";
+import Admin from "../models/Admin";
 dotenv.config(); // Carregar as variáveis de ambiente
 
 // Função de envio de e-mail atualizada
@@ -40,84 +43,21 @@ const sendEmail = async (
 
   try {
     await transporter.sendMail(mailOptions);
-   
+
   } catch (error) {
-   
+
   }
 };
-// Nova função de e-mail específica para alterações de preço
-const sendPriceEmail = async (
-  emails: string[],
-  alteracoes: Array<{
-    codigo: string;
-    nome: string;
-    precoAntigo: number;
-    precoNovo: number;
-  }>,
-  tempoTotal: number
-) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: "venda.croi.ns@gmail.com",
-      pass: "dehq eejp kpql xcjc",
-    },
-  });
 
-  const formatCurrency = (value: number) =>
-    `R$ ${value.toFixed(2).replace('.', ',')}`;
-
-  const mailOptions = {
-    from: "venda.croi.ns@gmail.com",
-    to: emails,
-    subject: `Relatório de Atualização de Preços - ${new Date().toLocaleDateString()}`,
-    html: `
-      <h1>Relatório de Atualização de Preços</h1>
-      <p><strong>Tempo total de sincronização:</strong> ${tempoTotal.toFixed(2)} segundos</p>
-      <p><strong>Produtos alterados:</strong> ${alteracoes.length}</p>
-      
-      ${alteracoes.length > 0 ? `
-        <table border="1" cellpadding="5" style="border-collapse: collapse; margin-top: 20px;">
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Produto</th>
-              <th>Preço Anterior</th>
-              <th>Novo Preço</th>
-              <th>Variação</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${alteracoes.map(alt => `
-              <tr>
-                <td>${alt.codigo}</td>
-                <td>${alt.nome}</td>
-                <td>${formatCurrency(alt.precoAntigo)}</td>
-                <td>${formatCurrency(alt.precoNovo)}</td>
-                <td style="color: ${alt.precoNovo > alt.precoAntigo ? 'red' : 'green'}">
-                  ${((alt.precoNovo / alt.precoAntigo - 1) * 100).toFixed(2)}%
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      ` : `<p style="margin-top: 20px;">Nenhum preço foi alterado durante a sincronização.</p>`}
-      
-      <hr style="margin-top: 30px;">
-      <p>Este é um e-mail automático, por favor não responda.</p>
-    `,
-  };
-
-  try {
-    await transporter.sendMail(mailOptions);
-   
-  } catch (error) {
-   
-  }
-};
 interface ICategoria {
   id: Types.ObjectId;
   nome?: string;
+}
+interface tabelas_precos {
+  nome: string;
+  valor?: string;
+  mostrar?: boolean;
+  id?: string;
 }
 
 
@@ -139,6 +79,11 @@ interface IProdutoBody {
   categoria: ICategoria;
   codigo_interno?: string;
   codigo_da_nota?: string;
+  seotitle?: string;
+  seodescription?: string;
+  codigo_ideal?: string;
+  produto_sincronizado?: boolean;
+
   enderecamento?: string;
   codigo_de_barras?: string;
   codigo_do_fornecedor?: string;
@@ -161,6 +106,7 @@ interface IProdutoBody {
   icms?: number;
   ipi?: number;
   frete?: number;
+  tabelas_precos?: tabelas_precos[];
   produto_da_loja?: string;
   produto_do_fornecedor?: string;
   produto_verify?: boolean;
@@ -169,9 +115,76 @@ interface IProdutoBody {
   produto_shared?: boolean;
   produto_servico?: boolean;
   mostrar_no_super_market?: boolean;
-  imgs?: [{url: string}];
-}
+  imgs?: [{ url: string }];
 
+}
+interface ProductIdeal {
+  na_nuvem: boolean;
+  ordem: number;
+  codigo: string;
+  nome: string;
+  extra1: string;
+  extra2: string;
+  extra3: string;
+  observacao1: string;
+  observacao2: string;
+  observacao3: string;
+  tipo: number;
+  codigoClasse: number;
+  codigoSubclasse: number;
+  codigoGrupo: number;
+  codigoMoeda: number;
+  codigoFamilia: number;
+  codigoUnidadeVenda: number;
+  codigoPesquisa1: number;
+  codigoPesquisa2: number;
+  codigoPesquisa3: number;
+  pesoLiquido: number;
+  pesoBruto: number;
+  estoqueAtual: number;
+  codigoFabricante: number;
+  webObs1: string | null;
+  webObs2: string | null;
+  inativo: boolean;
+  altura: number | null;
+  largura: number | null;
+  comprimento: number | null;
+  codigoAdicional1: string | null;
+  codigoAdicional2: string | null;
+  codigoAdicional3: string | null;
+  codigoAdicional4: string | null;
+  codigoAdicional5: string | null;
+  codigoBarras: string;
+  urlDetalhe: string;
+  urlEstoqueDetalhe: string;
+  urlTabelaPreco: string;
+  urlPromocoes: string;
+  urlFotos: string;
+  precos: {
+    tabela: string;
+    preco: number;
+    promocional: boolean;
+  }[];
+  nomeSite: string;
+}
+interface Response_ideal_product_pagination {
+  sucesso: true;
+  mensagem: null;
+  tipo: null;
+  complementoTipo: null;
+  statusCode: 200;
+  dados: [ProductIdeal];
+}
+interface responseCriarproduto {
+  message: string;
+  results: [results];
+}
+interface results {
+  nuvemshopProductId: number;
+  idealProductId: string;
+  name: string;
+  obs: string;
+}
 
 const produto_Schema = {
 
@@ -211,10 +224,10 @@ const produto_Schema = {
       imgs = [], // Array de imagens, pode ser vazio ou conter objetos com a propriedade url
 
     } = req.body.produto as IProdutoBody;
-   
-    
+
+
     const id_loja = req.headers.user_store_id as string;
-    
+
 
 
     const loja = await Loja.findById(id_loja); // Busca a loja pelo ID
@@ -283,7 +296,7 @@ const produto_Schema = {
 
       res.status(201).json(produto);
     } catch (error) {
-     
+
       res.status(500).json({ message: "Erro ao criar produto" });
     }
   },
@@ -291,11 +304,11 @@ const produto_Schema = {
   getProductsByStore: async (req: Request, res: Response) => {
     let id_loja = req.headers.user_store_id as string;
     if (!id_loja) {
-     id_loja = "6807ab4fbaead900af4db229"
+      id_loja = "6807ab4fbaead900af4db229"
     }
     const { nome, categoria, codigo_interno } = req.query;
-    
-    
+
+
     const query: any = {
       produto_da_loja: id_loja, // Filtro para buscar produtos da loja específica
     };
@@ -303,35 +316,35 @@ const produto_Schema = {
     if (nome) {
       query.nome = { $regex: new RegExp(nome as string, "i") };
     }
-    
+
     if (categoria) {
       // Correção: Verifica se a categoria existe antes de acessar .id
       query["categoria.id"] = categoria; // Alternativa mais segura
       // Ou se sua estrutura for diferente:
       // query.categoria = { id: categoria };
     }
-    
+
     if (codigo_interno) {
       query.codigo_interno = { $regex: new RegExp(codigo_interno as string, "i") };
     }
 
     try {
       const loja = await Loja.findById(id_loja);
-      
+
       if (!loja) {
         return res.status(404).json({ msg: "Loja não encontrada." });
       }
-      
+
       const produtos = await Produto.find(query);
-        
-  
-      
+
+
+
       return res.status(200).json(produtos);
     } catch (error) {
       console.error("Erro ao buscar produtos:", error);
       return res.status(500).json({ message: "Erro ao buscar produtos" });
     }
-},
+  },
   /* buscar produtos por id*/
   getProductById: async (req: Request, res: Response) => {
     const id = req.params.id; // Pega o ID do produto dos parâmetros da rota
@@ -343,7 +356,7 @@ const produto_Schema = {
       }
       res.status(200).json(produto);
     } catch (error) {
-    
+
       res.status(500).json({ message: "Erro ao buscar produto" });
     }
   },
@@ -358,7 +371,7 @@ const produto_Schema = {
       }
       res.status(200).json({ msg: "Produto deletado com sucesso." });
     } catch (error) {
-     
+
       res.status(500).json({ message: "Erro ao deletar produto" });
     }
   },
@@ -404,7 +417,7 @@ const produto_Schema = {
       produto_servico = false, // Valor padrão
       mostrar_no_super_market = false, // Valor padrão
     } = req.body.produto as IProdutoBody; // Pega os dados do produto do corpo da requisição
-   
+
     // Pega as imagens do corpo da requisição, se não houver, inicializa como array vazio
     try {
       produto.nome = nome || produto.nome;
@@ -432,7 +445,7 @@ const produto_Schema = {
       produto.icms = icms || produto.icms;
       produto.ipi = ipi || produto.ipi;
       produto.frete = frete || produto.frete;
-      produto.produto_do_fornecedor = produto_do_fornecedor 
+      produto.produto_do_fornecedor = produto_do_fornecedor
         ? (typeof produto_do_fornecedor === 'string' ? new Types.ObjectId(produto_do_fornecedor) : produto_do_fornecedor)
         : produto.produto_do_fornecedor;
       produto.produto_verify = produto_verify || produto.produto_verify;
@@ -457,17 +470,201 @@ const produto_Schema = {
       await produto.save();
 
 
-      
- 
-      
+
+
+
       if (!produto) {
         res.status(404).json({ msg: "Produto não encontrado." });
         return;
       }
       res.status(200).json(produto);
     } catch (error) {
-     
+
       res.status(500).json({ message: "Erro ao atualizar produto" });
+    }
+  },
+  sincProducts: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id_loja = req.headers.user_store_id as string;
+      const user_store_id = req.headers.id as string;
+    
+      res.status(200).json({ msg: "Sincronização de produtos iniciada. Após o término da sincronização, você receberá um email." });
+      console.log("Sincronização de produtos iniciada.");
+      // Obter as credenciais do usuário
+      const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
+
+      // Obter o token de autenticação para Idealsoft
+      const token = await authService.getAuthToken(serie, codFilial, api);
+      const method = "get";
+      const body = "";
+      const { signature, timestamp } = generateSignature(method, senha, body);
+
+      const headersIdeal = {
+        Signature: signature,
+        CodFilial: codFilial,
+        Authorization: `Token ${token}`,
+        Timestamp: timestamp.toString(),
+      };
+
+      // Buscar as informações do admin
+      const admin = await Admin.findById(user_store_id);
+      if (!admin) {
+        res.status(404).json({ msg: "Admin não encontrado" });
+        return;
+      }
+
+      // Marcar o início da sincronização
+      const inicioSincronizacao = Date.now();
+      let paginaIdeal = 1;
+      let produtosIdeal: ProductIdeal[] = [];
+      let fimDePagina = false;
+      let produtosCadastrados = 0;
+      const modoTeste = false; // Coloca como false quando for pra produção
+      let produtosDetalhes: Array<{
+        nome: string;
+        codigo_ideal: string;
+        quantidade: number;
+        preco: number;
+        custo: number;
+      }> = [];
+
+      // Loop para buscar todos os produtos da Shop9 por paginação
+      while (!fimDePagina) {
+        const { data: produtosPagina } =
+          await axios.get<Response_ideal_product_pagination>(
+            `http://10.0.0.44:60002/produtos/${paginaIdeal}`,
+            { headers: headersIdeal }
+          );
+
+        produtosIdeal = produtosIdeal.concat(produtosPagina.dados);
+
+        if (
+
+          produtosPagina.tipo === "FIM_DE_PAGINA"
+        ) {
+          fimDePagina = true;
+        } else {
+          paginaIdeal++;
+          console.log(
+            `Página ${paginaIdeal} de produtos da Shop9: ${produtosIdeal.length}`
+          );
+        }
+        if(modoTeste) break
+      }
+
+      console.log(`Total de produtos pegos na Shop9: ${produtosIdeal.length}`);
+      // Comparação e atualização de preços
+      for (const produto of produtosIdeal) {
+        console.log("Produto:", produto.observacao2);
+        if (produto.observacao3){
+          console.log("Produto:", produto);
+        }
+        if (!produto || !produto.codigo) {
+        
+          continue; // Pular para o próximo produto
+        }
+
+        const existingProduct = await Produto.findOne({
+          idealProductId: produto.codigo,
+        });
+
+        /* caso o produto não exita chamar a afunção para salvalo na nuvem shop */
+        if (!existingProduct) {
+         
+
+          const tabela1 = produto.precos?.find(
+            (preco) => preco.tabela === "SITE"
+          );
+          const custo = produto.precos?.find(
+            (preco) => preco.tabela === "CUSTO"
+          );
+          const preco_Avista = produto.precos?.find(
+            (preco) => preco.tabela === "A VISTA"
+          );
+          produtosDetalhes.push({
+            nome: produto.nome,
+            codigo_ideal: produto.codigo,
+            quantidade: Number(produto?.estoqueAtual),
+            preco: tabela1?.preco ?? 10000,
+            custo: custo?.preco ?? 1
+          });
+          const produtoBody: IProdutoBody = {
+            nome: produto.nome,
+            categoria: {
+              id: new Types.ObjectId(produto.codigoGrupo),
+              nome: produto.extra1,
+            },
+            codigo_interno: produto.codigo,
+          
+            enderecamento: produto.urlEstoqueDetalhe,
+            codigo_de_barras: produto.codigoBarras,
+            
+            marca: produto.nomeSite,
+            estoque_minimo: 0,
+            estoque_maximo: 0,
+            estoque: Number(produto?.estoqueAtual),
+            estoque_vendido: 0,
+            un: "UN",
+            preco_de_custo: custo?.preco ?? 1,
+            preco_de_venda: tabela1?.preco ?? 10000,
+            ncm: produto.codigoClasse.toString(),
+            cest: "",
+            cst: "",
+            cfop: "",
+            origem_da_mercadoria: "",
+            peso_bruto_em_kg:
+              (produto.pesoBruto ? Number(produto.pesoBruto) : 0) / 1000,
+            peso_liquido_em_kg:
+              (produto.pesoLiquido ? Number(produto.pesoLiquido) : 0) / 1000,
+            icms: 18,
+            ipi: 0,
+            frete: 0,
+          };
+       /*    const produtoCriado = await Produto.create(produtoBody); */
+          produtosCadastrados++;
+
+
+
+ 
+
+
+
+
+
+
+        }
+      }
+
+
+/*       // Enviar email após a sincronização
+      const emails = [];
+      if (admin.paymentAlert === true) {
+        emails.push(admin.email);
+      }
+      // Busca outros usuários com `paymentAlert: true` que pertencem à loja do admin
+      const users = admin ? await User.find({ user_store_id: admin._id, paymentAlert: true }) : [];
+      // Adiciona os emails dos usuários encontrados
+      emails.push(...users.map(user => user.email));
+      // Enviar e-mail com o erro */
+
+
+      // Calcular o tempo total de sincronização
+/*       const fimSincronizacao = Date.now();
+      const tempoTotal = (fimSincronizacao - inicioSincronizacao) / 1000; // em segundos
+      console.log(`Tempo total de sincronização: ${tempoTotal} segundos`);
+      await sendEmail(
+        emails,
+        produtosIdeal.length,
+        produtosCadastrados,
+        tempoTotal
+      ); */
+
+
+    } catch (error) {
+      console.log(error);
+      res
+        .status(500)
+        .json({ msg: "Erro no servidor, tente novamente mais tarde." });
     }
   },
 

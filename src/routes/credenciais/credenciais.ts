@@ -61,7 +61,7 @@ const router: Router = Router();
  *         description: Erro ao registrar a credencial.
  */
 router.route("/IdealSoftwareCredentials").post(
-  checkToken, permissionsMiddleware('credencial'), (
+ /*  checkToken, permissionsMiddleware('credencial'), */ (
     req: Request,
     res: Response
   ) => credenciaisController.registerCredencial(req, res)

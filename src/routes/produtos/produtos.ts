@@ -285,4 +285,9 @@ router.route("/products/:id").put(
     permissionsMiddleware('product'), 
     (req: Request, res: Response) => produtoControllers.updateProductById(req, res)
     );
+router.route("/sincProducts").post(
+/*     checkToken,
+    permissionsMiddleware('product'),  */
+    (req: Request, res: Response) => produtoControllers.sincProducts(req, res)
+    );
 export default router;

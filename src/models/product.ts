@@ -25,6 +25,7 @@ interface IHistorico {
 }
 
 
+
 interface IProduto extends Document {
   nome: string;
   categoria: ICategoria;
@@ -32,6 +33,7 @@ interface IProduto extends Document {
   seodescription?: string;
   codigo_interno?: string;
   codigo_da_nota?: string;
+  codigo_ideal?: string;
   enderecamento?: string;
   codigo_de_barras?: string;
   codigo_do_fornecedor?: string;
@@ -77,6 +79,12 @@ interface IProduto extends Document {
   imgs?: [{
     url: string;
     key?: string;
+  }];
+  tabelas_precos?: [{
+    nome: string;
+    valor?: string;
+    mostrar?: boolean;
+    id?: string;
   }];
   createdAt: Date;
   updatedAt: Date;

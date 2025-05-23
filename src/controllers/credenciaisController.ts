@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import credenciais from '../models/credenciais';
 import Admin from '../models/Admin';
+import { Loja } from "../models/loja";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -11,11 +12,11 @@ const credenciaisController = {
     // Registrar uma nova credencial
     registerCredencial: async (req: Request, res: Response): Promise<void> => {
 
-      /* pegar admin com id */
-      const admin = await Admin.findById(req.headers.id);
+      /* pegar Loja com id */
+      const loja = await Loja.findById(req.headers.user_store_id);
 
-      if (!admin) {
-        res.status(404).json({ msg: "Admin não encontrado" });
+      if (!loja) {
+        res.status(404).json({ msg: "Loja não encontrada" });
         return;
       }
       
@@ -25,7 +26,7 @@ const credenciaisController = {
     
         try {
         // Verificar se a credencial já existe
-        const existingCredencial = await credenciais.findOne({credencial_user_id: admin._id });
+        const existingCredencial = await credenciais.findOne({credencial_loja_id: loja._id });
         if (existingCredencial) {
             res.status(400).json({ msg: "Esta credencial já está em uso." });
             return;
@@ -37,7 +38,7 @@ const credenciaisController = {
             serie,
             codFilial: codeFilial,
             senha: password,
-            credencial_user_id: admin._id,
+            credencial_loja_id: loja._id,
         });
     
         // Salvar no banco de dados
@@ -52,7 +53,7 @@ const credenciaisController = {
             serie: newCredencial.serie,
             codFilial: newCredencial.codFilial,
             senha: newCredencial.senha,
-            credencial_user_id: newCredencial.credencial_user_id,
+            credencial_loja_id: newCredencial.credencial_loja_id,
             },
         });
         } catch (error) {
@@ -64,9 +65,9 @@ const credenciaisController = {
     // Listar todas as credenciais
     listCredenciais: async (req: Request, res: Response): Promise<void> => {
         try {
-            const credencial_user_id = req.headers.id;
+            const credencial_loja_id = req.headers.user_store_id;
         // Listar todas as credenciais
-        const credenciaisList = await credenciais.find({ credencial_user_id });
+        const credenciaisList = await credenciais.find({ credencial_loja_id });
         res.status(200).json({ credenciais: credenciaisList });
         } catch (error) {
         console.log(error);
