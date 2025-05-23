@@ -10,7 +10,7 @@ dotenv.config(); // Carregar as variáveis de ambiente
 const userController = {
   // Registrar um novo usuário (admin ou padrão)
   registerUser: async (req: Request, res: Response): Promise<void> => {
-    const id_loja = req.headers.id as string;
+    const id_loja = req.headers.user_store_id as string;
   
     
     
@@ -67,10 +67,10 @@ const userController = {
         .json({ msg: "Erro no servidor, tente novamente mais tarde." });
     }
   },
-  // pegar produtos por parginação da idealsoft
+ 
   get_user_store: async (req: Request, res: Response): Promise<void> => {
     try {
-      const id_loja = req.headers.id as string;
+      const id_loja = req.headers.user_store_id as string;
       const user_store_id = req.headers.user_store_idd as string;
       const id_store = user_store_id ? user_store_id : id_loja;
 

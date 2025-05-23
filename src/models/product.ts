@@ -28,6 +28,8 @@ interface IHistorico {
 interface IProduto extends Document {
   nome: string;
   categoria: ICategoria;
+  seotitle?: string;
+  seodescription?: string;
   codigo_interno?: string;
   codigo_da_nota?: string;
   enderecamento?: string;
@@ -85,6 +87,14 @@ const produtoSchema = new Schema<IProduto>(
     nome: {
       type: String,
       required: true,
+    },
+    seotitle: {
+      type: String,
+      required: false,
+    },
+    seodescription: {
+      type: String,
+      required: false,
     },
     categoria: {
       id: {
