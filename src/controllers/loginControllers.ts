@@ -66,7 +66,7 @@ const loginController = {
 
       res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // garante que em produção só via HTTPS
+        secure: true, // garante que em produção só via HTTPS
         sameSite: "strict", // previne CSRF
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
       })
