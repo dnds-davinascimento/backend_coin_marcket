@@ -18,6 +18,7 @@ const checkToken = async (
 
   // Extrair o token do header Authorization
   const token = req.cookies.token;
+  console.log("Token recebido:", token);
 
 
   if (!token) {
