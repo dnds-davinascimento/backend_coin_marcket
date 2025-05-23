@@ -156,7 +156,7 @@ const router: Router = Router();
  */
 router.route("/creat_user_shofusion").post(
   checkToken,
-  permissionsMiddleware('product'), 
+  permissionsMiddleware('user'), 
   (req: Request, res: Response) => userController.registerUser(req, res)
 );
 /**
@@ -210,7 +210,7 @@ router.route("/creat_user_shofusion").post(
 
 router.route("/get_user_store").get(
   checkToken,
-  permissionsMiddleware('product'), 
+  permissionsMiddleware('user'),  
   (req: Request, res: Response) => userController.get_user_store(req, res)
 );
 /**
@@ -256,7 +256,7 @@ router.route("/get_user_store").get(
 
 router.route("/UserById/:id").get(
   checkToken,
-  permissionsMiddleware('user'),
+  permissionsMiddleware('user'), 
   (req: Request, res: Response) => userController.UserById(req, res)
 );
 /**
@@ -339,7 +339,7 @@ router.route("/UserById/:id").get(
 
 router.route("/edit_user_shofusion/:id").put(
   checkToken,
-  permissionsMiddleware('user'),
+  permissionsMiddleware('user'), 
   (req: Request, res: Response) => userController.editUserById(req, res)
 );
 /**
@@ -379,7 +379,7 @@ router.route("/edit_user_shofusion/:id").put(
  */
 router.route("/delete_user/:id").delete(
   checkToken,
-  permissionsMiddleware('user'),
+  permissionsMiddleware('user'), 
   (req: Request, res: Response) => userController.deleteUserById(req, res)
 );
 
