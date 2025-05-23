@@ -43,7 +43,9 @@ const corsOptions = {
 };
 
 const corsOrigins = [
-  'http://localhost:3000',]
+  'http://localhost:3000',
+  'https://frontend-croi-distribuidora.vercel.app',
+]
 // Configura o CORS para permitir requisições da origem do frontend
 app.use(cors({
   origin: corsOrigins,
