@@ -263,8 +263,7 @@ router.route("/products").post(
 );
 /* rota de buscar produto por loja getProductsByStore */
 router.route("/products").get(
-   checkToken,
-  permissionsMiddleware('product'), 
+
   
   (req: Request, res: Response) => produtoControllers.getProductsByStore(req, res)
 );
