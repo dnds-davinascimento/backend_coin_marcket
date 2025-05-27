@@ -3,6 +3,12 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 interface ICategoria {
   id: Types.ObjectId;
   nome?: string;
+  subcategorias?: [
+    {
+      id: Types.ObjectId;
+      nome: string;
+    }
+  ];
 }
 
 interface IProdutoSincronizado {
@@ -28,12 +34,12 @@ interface IHistorico {
 
 interface IProduto extends Document {
   nome: string;
-  categoria: ICategoria;
+  categoria?: ICategoria;
   seotitle?: string;
   seodescription?: string;
   codigo_interno?: string;
   codigo_da_nota?: string;
-  codigo_ideal?: string;
+  codigo_ideal?: number;
   enderecamento?: string;
   codigo_de_barras?: string;
   codigo_do_fornecedor?: string;
@@ -64,7 +70,7 @@ interface IProduto extends Document {
   preco_por_categoria?: {
     Preco_venda_categoria?: number;
   };
-  descricao?: string;
+  description?: string;
   seoTitle?: string;
   seoDescription?: string;
   produto_verify?: boolean;
@@ -85,6 +91,7 @@ interface IProduto extends Document {
     valor?: string;
     mostrar?: boolean;
     id?: string;
+    promocional?: boolean;
   }];
   createdAt: Date;
   updatedAt: Date;
@@ -104,6 +111,15 @@ const produtoSchema = new Schema<IProduto>(
       type: String,
       required: false,
     },
+    description: {
+      type: String,
+      required: false,
+    },
+    codigo_ideal: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
     categoria: {
       id: {
         type: Schema.Types.ObjectId,
@@ -113,7 +129,20 @@ const produtoSchema = new Schema<IProduto>(
       nome: {
         type: String,
         required: false,
-      }
+      },
+      subcategorias: [
+        {
+          id: {
+            type: Schema.Types.ObjectId,
+            ref: "Categoria",
+            required: false,
+          },
+          nome: {
+            type: String,
+            required: false,
+          },
+        },
+      ],
     },
     codigo_interno: {
       type: String,
@@ -243,6 +272,15 @@ const produtoSchema = new Schema<IProduto>(
       type: Number,
       required: true,
     },
+    tabelas_precos: [
+      {
+        nome: { type: String, required: true },
+        valor: { type: String, required: false },
+        mostrar: { type: Boolean, default: true },
+        promocional: { type: Boolean, default: false },
+        
+      },
+    ],
     produto_sincronizado_com: [
       {
         produto_sincronizado: { type: Boolean, default: false },

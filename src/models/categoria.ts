@@ -2,6 +2,9 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 
 interface ICategoria extends Document {
   nome: string;
+  seotitle?: string;
+  seodescription?: string;
+  codigo_ideal?: number;
   categoria_da_loja?: Types.ObjectId;
   parient?: Types.ObjectId;
   categoriaDestaque?: boolean;
@@ -23,6 +26,18 @@ const categoria_produto_Schema = new Schema<ICategoria>(
     nome: {
       type: String,
       required: true,
+    },
+    seotitle: {
+      type: String,
+      required: false,
+    },
+    seodescription: {
+      type: String,
+      required: false,
+    },
+    codigo_ideal: {
+      type: Number,
+      required: false,
     },
     categoriaDestaque: {
       type: Boolean,

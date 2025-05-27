@@ -209,6 +209,15 @@ router.route("/categorias/:id").delete(
 checkToken, permissionsMiddleware('categoria'),
     (req: Request, res: Response) => categoriaControllers.deleteById(req, res)
 );
+router.route("/createCategoriaShop9").post(
+/* checkToken, permissionsMiddleware('categoria'), */
+    (req: Request, res: Response) => categoriaControllers.createCategoriaShop9(req, res)
+);
+ 
+router.route("/createSubCategoriaShop9").post(
+/* checkToken, permissionsMiddleware('categoria'), */
+    (req: Request, res: Response) => categoriaControllers.createSubCategoriaShop9(req, res)
+);
  
 
 export default router;

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import dotenv from "dotenv";
 import { Types } from "mongoose";
-import User from "../models/user";
+import { uploadToS3 } from "../services/uploadToS3";
 import nodemailer from "nodemailer";
 import axios from "axios";
 import { Produto } from "../models/product";
@@ -58,6 +58,7 @@ interface tabelas_precos {
   valor?: string;
   mostrar?: boolean;
   id?: string;
+  promocional?: boolean;
 }
 
 
@@ -83,7 +84,6 @@ interface IProdutoBody {
   seodescription?: string;
   codigo_ideal?: string;
   produto_sincronizado?: boolean;
-
   enderecamento?: string;
   codigo_de_barras?: string;
   codigo_do_fornecedor?: string;
@@ -115,7 +115,7 @@ interface IProdutoBody {
   produto_shared?: boolean;
   produto_servico?: boolean;
   mostrar_no_super_market?: boolean;
-  imgs?: [{ url: string }];
+  imgs?: { url: string, key: string }[]; // Array de imagens, cada imagem é um objeto com a propriedade url
 
 }
 interface ProductIdeal {
@@ -185,6 +185,128 @@ interface results {
   name: string;
   obs: string;
 }
+interface EstoqueFilial {
+  codigoFilial: number;
+  estoqueAtual: number;
+}
+interface EstoqueResponse {
+  sucesso: boolean;
+  mensagem: string | null;
+  tipo: string | null;
+  complementoTipo: string | null;
+  statusCode: number;
+  dados: {
+    codigo: string;
+    urlDetalhe: string;
+    tipoEstoque: string;
+    estoqueFiliais: EstoqueFilial[]; // EstoqueFiliais tipado aqui
+  };
+}
+
+interface Preco {
+  tabela: string;
+  preco: number;
+  promocional: boolean;
+}
+interface ProductDetalhesResponse {
+  ordem: number;
+  codigo: string;
+  nome: string;
+  extra1: string;
+  extra2: string;
+  extra3: string;
+  observacao1: string;
+  observacao2: string;
+  observacao3: string;
+  tipo: number;
+  codigoClasse: number;
+  codigoSubclasse: number;
+  codigoGrupo: number;
+  codigoMoeda: number;
+  codigoFamilia: number;
+  codigoUnidadeVenda: number;
+  codigoPesquisa1: number;
+  codigoPesquisa2: number;
+  codigoPesquisa3: number;
+  pesoLiquido: number;
+  pesoBruto: number;
+  estoqueAtual: number | null;
+  codigoFabricante: number;
+  webObs1: string | null;
+  webObs2: string | null;
+  inativo: boolean;
+  altura: number;
+  largura: number;
+  comprimento: number;
+  codigoAdicional1: string;
+  codigoAdicional2: string;
+  codigoAdicional3: string;
+  codigoAdicional4: string;
+  codigoAdicional5: string;
+  codigoBarras: string;
+  urlDetalhe: string;
+  urlEstoqueDetalhe: string;
+  urlTabelaPreco: string;
+  urlPromocoes: string;
+  urlFotos: string;
+  nomeSite: string;
+  estoqueFiliais: EstoqueFilial[]; // Adicionando estoqueFiliais
+  precos: Preco[]; // Adicionando precos
+}
+interface PrecoResponse {
+  sucesso: boolean;
+  mensagem: string | null;
+  tipo: string | null;
+  complementoTipo: string | null;
+  statusCode: number;
+  dados: {
+    codigo: string;
+    precos: Preco[]; // Precos tipado aqui
+  };
+}
+interface Subcategoria {
+  id: string;
+  nome: string;
+  _id: string;
+}
+
+interface CategoriaData {
+  _id: string;
+  nome: string;
+  codigo_ideal: number;
+  categoriaDestaque: boolean;
+  categoria_da_loja: string;
+  subcategorias: Subcategoria[];
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+interface CategoriaResponse {
+  success: boolean;
+  message: string;
+  data: CategoriaData;
+}
+interface ApiResponse {
+  sucesso: boolean;
+  mensagem: string | null;
+  tipo: string | null;
+  complementoTipo: string | null;
+  statusCode: number;
+  dados: {
+    codigo: string;
+    fotos: Foto[];
+  };
+}
+
+interface Foto {
+  posicao: number;
+  principal: boolean;
+}
+interface responseIA {
+  output: string;
+}
+
 
 const produto_Schema = {
 
@@ -454,7 +576,7 @@ const produto_Schema = {
       produto.produto_shared = produto_shared || produto.produto_shared;
       produto.produto_servico = produto_servico || produto.produto_servico;
       produto.mostrar_no_super_market = mostrar_no_super_market || produto.mostrar_no_super_market;
-      produto.imgs = imgs; // Atualiza as imagens do produto, se houver novas imagens no corpo da requisição
+      produto.imgs = imgs && imgs.length > 0 ? [imgs[0]] : undefined; // Atualiza as imagens do produto, se houver novas imagens no corpo da requisição
       const id_acao = new Types.ObjectId(); // Gera um novo ID para a ação
       (produto.historico ??= []).push({
         usuario: "Sistema",
@@ -487,7 +609,7 @@ const produto_Schema = {
     try {
       const id_loja = req.headers.user_store_id as string;
       const user_store_id = req.headers.id as string;
-    
+
       res.status(200).json({ msg: "Sincronização de produtos iniciada. Após o término da sincronização, você receberá um email." });
       console.log("Sincronização de produtos iniciada.");
       // Obter as credenciais do usuário
@@ -549,115 +671,82 @@ const produto_Schema = {
             `Página ${paginaIdeal} de produtos da Shop9: ${produtosIdeal.length}`
           );
         }
-        if(modoTeste) break
+       
       }
 
       console.log(`Total de produtos pegos na Shop9: ${produtosIdeal.length}`);
       // Comparação e atualização de preços
       for (const produto of produtosIdeal) {
-        console.log("Produto:", produto.observacao2);
-        if (produto.observacao3){
-          console.log("Produto:", produto);
-        }
         if (!produto || !produto.codigo) {
-        
+
           continue; // Pular para o próximo produto
         }
 
-        const existingProduct = await Produto.findOne({
-          idealProductId: produto.codigo,
-        });
+        if (produto.observacao3) {
+          console.log("Produto:", produto);
 
-        /* caso o produto não exita chamar a afunção para salvalo na nuvem shop */
-        if (!existingProduct) {
-         
 
-          const tabela1 = produto.precos?.find(
-            (preco) => preco.tabela === "SITE"
-          );
-          const custo = produto.precos?.find(
-            (preco) => preco.tabela === "CUSTO"
-          );
-          const preco_Avista = produto.precos?.find(
-            (preco) => preco.tabela === "A VISTA"
-          );
-          produtosDetalhes.push({
-            nome: produto.nome,
+
+          const existingProduct = await Produto.findOne({
             codigo_ideal: produto.codigo,
-            quantidade: Number(produto?.estoqueAtual),
-            preco: tabela1?.preco ?? 10000,
-            custo: custo?.preco ?? 1
           });
-          const produtoBody: IProdutoBody = {
-            nome: produto.nome,
-            categoria: {
-              id: new Types.ObjectId(produto.codigoGrupo),
-              nome: produto.extra1,
-            },
-            codigo_interno: produto.codigo,
-          
-            enderecamento: produto.urlEstoqueDetalhe,
-            codigo_de_barras: produto.codigoBarras,
-            
-            marca: produto.nomeSite,
-            estoque_minimo: 0,
-            estoque_maximo: 0,
-            estoque: Number(produto?.estoqueAtual),
-            estoque_vendido: 0,
-            un: "UN",
-            preco_de_custo: custo?.preco ?? 1,
-            preco_de_venda: tabela1?.preco ?? 10000,
-            ncm: produto.codigoClasse.toString(),
-            cest: "",
-            cst: "",
-            cfop: "",
-            origem_da_mercadoria: "",
-            peso_bruto_em_kg:
-              (produto.pesoBruto ? Number(produto.pesoBruto) : 0) / 1000,
-            peso_liquido_em_kg:
-              (produto.pesoLiquido ? Number(produto.pesoLiquido) : 0) / 1000,
-            icms: 18,
-            ipi: 0,
-            frete: 0,
-          };
-       /*    const produtoCriado = await Produto.create(produtoBody); */
-          produtosCadastrados++;
 
+          /* caso o produto não exita chamar a afunção para salvalo na nuvem shop */
+          if (!existingProduct) {
 
-
- 
+            const headers = {
+              "Content-Type": "application/json",
+              authorization: req.headers.authorization,
+              id: "6807a4d7860872fd82906b3f",
+              user_store_id: "6807ab4fbaead900af4db229" as string,
+            };
+            const respose = await axios.post<responseCriarproduto>(
+              `http://localhost:4000/api/postsingleProductsNuvemShop`,
+              produto,
+              {
+                headers,
+              }
+            );
+            console.log("Resposta da criação do produto:", respose.data);
+            produtosCadastrados++;
 
 
 
 
 
 
+
+
+
+
+          }
         }
+
       }
 
 
-/*       // Enviar email após a sincronização
-      const emails = [];
-      if (admin.paymentAlert === true) {
-        emails.push(admin.email);
-      }
-      // Busca outros usuários com `paymentAlert: true` que pertencem à loja do admin
-      const users = admin ? await User.find({ user_store_id: admin._id, paymentAlert: true }) : [];
-      // Adiciona os emails dos usuários encontrados
-      emails.push(...users.map(user => user.email));
-      // Enviar e-mail com o erro */
+      /*       // Enviar email após a sincronização
+            const emails = [];
+            if (admin.paymentAlert === true) {
+              emails.push(admin.email);
+            }
+            // Busca outros usuários com `paymentAlert: true` que pertencem à loja do admin
+            const users = admin ? await User.find({ user_store_id: admin._id, paymentAlert: true }) : [];
+            // Adiciona os emails dos usuários encontrados
+            emails.push(...users.map(user => user.email));
+            // Enviar e-mail com o erro */
 
 
       // Calcular o tempo total de sincronização
-/*       const fimSincronizacao = Date.now();
-      const tempoTotal = (fimSincronizacao - inicioSincronizacao) / 1000; // em segundos
-      console.log(`Tempo total de sincronização: ${tempoTotal} segundos`);
-      await sendEmail(
-        emails,
-        produtosIdeal.length,
-        produtosCadastrados,
-        tempoTotal
-      ); */
+      /*       const fimSincronizacao = Date.now();
+            const tempoTotal = (fimSincronizacao - inicioSincronizacao) / 1000; // em segundos
+            console.log(`Tempo total de sincronização: ${tempoTotal} segundos`);
+            await sendEmail(
+              emails,
+              produtosIdeal.length,
+              produtosCadastrados,
+              tempoTotal
+            ); */
 
 
     } catch (error) {
@@ -665,6 +754,484 @@ const produto_Schema = {
       res
         .status(500)
         .json({ msg: "Erro no servidor, tente novamente mais tarde." });
+    }
+  },
+  getProdutodetalhes: async (req: Request, res: Response): Promise<void> => {
+    // Tipagem das respostas
+
+    try {
+      const id_loja = req.headers.user_store_id as string;
+      const user_store_id = req.headers.id as string;
+
+      // Obter credenciais usando o serviço
+      const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
+
+      // 1. Obtenha o token de autenticação
+      const token = await authService.getAuthToken(serie, codFilial, api);
+
+      const codigoProduto = req.query.codigo;
+
+      if (!codigoProduto) {
+        res
+          .status(400)
+          .json({ msg: "Código do produto não fornecido nos headers" });
+        return;
+      }
+
+      const method = "get";
+      const body = ""; // Requisição GET, corpo vazio
+      const { signature, timestamp } = generateSignature(method, senha, body);
+
+      const headers = {
+        Signature: signature,
+        CodFilial: codFilial,
+        Authorization: `Token ${token}`,
+        Timestamp: timestamp.toString(),
+      };
+
+      // 2. Fazer a chamada para pegar o objeto produto com as URLs
+      const { data: produtoDetalhes } = await axios.get<{
+        dados: ProductDetalhesResponse;
+      }>(`http://10.0.0.44:60002/produtos/detalhes/${codigoProduto}`, { headers });
+
+      // Agora que temos as URLs, vamos realizar as outras requisições (estoque, preços)
+      const urlEstoque = `http://10.0.0.44:60002/estoque/${codigoProduto}`;
+      const urlPrecos = `http://10.0.0.44:60002/precos/${codigoProduto}`;
+
+      const [estoqueResponse, precoResponse] = await Promise.all([
+        axios.get<EstoqueResponse>(urlEstoque, { headers }), // Tipando a resposta de estoque
+        axios.get<PrecoResponse>(urlPrecos, { headers }), // Tipando a resposta de preços
+      ]);
+
+      // Consolidar as respostas dentro do objeto produto
+      const resultadoFinal = {
+        produto: {
+          ...produtoDetalhes.dados, // Dados do produto
+          estoqueFiliais: estoqueResponse.data.dados.estoqueFiliais || [], // Dados de estoque
+          precos: precoResponse.data.dados.precos || [], // Dados de preços
+        },
+      };
+
+      // Retornar o resultado consolidado
+      res.status(200).json(resultadoFinal);
+    } catch (error) {
+      console.error(error);
+      res
+        .status(500)
+        .json({ msg: "Erro no servidor, tente novamente mais tarde" });
+    }
+  },
+  postsingleProductsNuvemShop: async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const id_loja = req.headers.user_store_id as string;
+      const user_store_id = req.headers.id as string;
+
+
+
+      const product = req.body; // O corpo da requisição deve conter o array de 
+      console.log("Produto recebido:", product);
+
+      const results = []; // Array para armazenar os resultados dos produtos enviados
+
+      try {
+        // Verificar se o Produto ja exite no MongoDB
+        const existingProduct = await Produto.findOne({
+          codigo_ideal: product.codigo,
+        });
+        console.log("Produto existente:", existingProduct);
+
+        if (existingProduct) {
+          // Produto já está cadastrado
+          res.status(200).json({ msg: "já estava cadastrado" });
+          return;
+        }
+        const codigoClasse = String(product.codigoClasse); // Código da classe que você quer filtrar
+        /* fazer requisição para saber se ja existe */
+        const headers = {
+          "Content-Type": "application/json",
+          authorization: req.headers.authorization,
+          id: "6807a4d7860872fd82906b3f",
+          user_store_id: "6807ab4fbaead900af4db229" as string,
+        };
+        const bodyCategoria = {
+          categoria_codigo: codigoClasse,
+        }
+        const { data: resposeCategoria } = await axios.post<CategoriaResponse>(
+          `http://localhost:4000/api/createCategoriaShop9`,
+          bodyCategoria,
+          {
+            headers,
+          }
+        );
+        console.log("Resposta da criação de categoria:", resposeCategoria);
+
+        const codigoSubClasse = String(product.codigoSubclasse);
+
+        const bodySubCategoria = {
+          subcategoria_codigo: codigoSubClasse,
+          parient: resposeCategoria.data.codigo_ideal, // Usando o ID da categoria criada
+        };
+        const { data: resposeSubCategoria } = await axios.post<CategoriaResponse>(
+          `http://localhost:4000/api/createSubCategoriaShop9`,
+          bodySubCategoria,
+          {
+            headers,
+          }
+        );
+        console.log("Resposta da criação de subcategoria:", resposeSubCategoria);
+        const categoriaProduto = {
+          id: resposeCategoria.data._id, // Usando o ID da subcategoria criada
+          nome: resposeCategoria.data.nome, // Nome da categoria
+          subcategorias: {
+            id: resposeSubCategoria.data._id, // Usando o ID da subcategoria criada
+            nome: resposeSubCategoria.data.nome, // Nome da subcategoria
+          },
+        };
+        const tabelas_precos = product.precos.map((preco: { tabela: string; preco: number; promocional: boolean }) => ({
+          nome: preco.tabela,
+          valor: preco.preco.toFixed(2),
+          promocional: preco.promocional
+        }));
+
+
+        // Criar o produto no MongoDB
+        const novoProduto = await Produto.create({
+          nome: product.nome,
+          categoria: categoriaProduto,
+          codigo_interno: product.codigo,
+          codigo_da_nota: product.codigo,
+          seotitle: product.nome,
+          seodescription: product.webObs1 || "",
+          codigo_ideal: product.codigo,
+          produto_sincronizado: true, // Marca como sincronizado
+          enderecamento: product.urlDetalhe || "",
+          codigo_de_barras: product.codigoBarras || "",
+          codigo_do_fornecedor: product.codigoFabricante ? String(product.codigoFabricante) : "",
+          marca: product.nomeSite || "",
+          estoque_minimo: 0, // Defina o valor padrão ou obtenha do produto
+          estoque_maximo: 0, // Defina o valor padrão ou obtenha do produto
+          estoque: product.estoqueAtual || 0, // Usando estoqueAtual do produto
+          estoque_vendido: 0, // Inicializando como 0
+          un: "un", // Unidade de medida padrão
+          preco_de_custo: product.precos[0]?.preco || 0, // Usando o primeiro preço como custo
+          preco_de_venda: product.precos[0]?.preco || 0, // Usando o primeiro preço como venda
+          ncm: "", // Defina o NCM conforme necessário
+          cest: "", // Defina o CEST conforme necessário
+          cst: "", // Defina o CST conforme necessário
+          cfop: "", // Defina o CFOP conforme necessário
+          origem_da_mercadoria: "", // Defina a origem da mercadoria conforme necessário
+          peso_bruto_em_kg: product.pesoBruto || 0, // Usando pesoBruto do produto
+          peso_liquido_em_kg: product.pesoLiquido || 0, // Usando pesoLiquido do produto
+          icms: 0, // Defina o ICMS conforme necessário
+          ipi: 0, // Defina o IPI conforme necessário
+          frete: 0, // Defina o frete conforme necessário
+          tabelas_precos, // Inicializando como array vazio ou preencher conforme necessário
+          produto_da_loja: id_loja,
+          produto_do_fornecedor: id_loja,
+        });
+        /* salvar o produto */
+        console.log("Novo produto criado:", novoProduto);
+
+        /* sincronizar img */
+        const response_img = await axios.post(
+          `http://localhost:4000/api/sinc_img_Product`,
+          product,
+          { headers }
+        );
+        console.log("Imagens sincronizadas:", response_img.data);
+        /* generate metados IA */
+        const response_IA = await axios.post<responseIA>(
+          `http://localhost:4000/api/sinc_metadados_IA`,
+          product,
+          { headers }
+        );
+        console.log("Metadados IA gerados:", response_IA.data);
+
+
+
+        // Adicionar o resultado ao array de resultados
+        results.push({
+          nuvemshopProductId: novoProduto._id,
+          idealProductId: product.codigo,
+          name: product.nome,
+          obs: product.webObs1 || "",
+        });
+        console.log("Produto adicionado aos resultados:", results[results.length - 1]);
+
+
+
+
+
+      } catch (error: any) {
+        console.log(error);
+        results.push({ error: error.message }); // Registra o erro no array de resultados
+      }
+      // Retornar os resultados
+      res.status(200).json({
+        message: "Produtos processados com sucesso",
+        results: results,
+      });
+
+
+    } catch (error) {
+      console.error("Erro no servidor:", error);
+      res
+        .status(500)
+        .json({ msg: "Erro no servidor, tente novamente mais tarde" });
+    }
+  },
+  sinc_img_Product: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id_loja = req.headers.user_store_id as string;
+      const user_store_id = req.headers.id as string;
+
+
+
+
+
+        const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
+
+      // Obter o token de autenticação para Idealsoft
+      const token = await authService.getAuthToken(serie, codFilial, api);
+      const method = "get";
+      const body = "";
+      const { signature, timestamp } = generateSignature(method, senha, body);
+
+      const headersIdeal = {
+        Signature: signature,
+        CodFilial: codFilial,
+        Authorization: `Token ${token}`,
+        Timestamp: timestamp.toString(),
+      };
+
+      const products = req.body; // O corpo da requisição deve conter o array de produtos
+
+      const results = [];
+    
+        try {
+          // Verificar se o Produto já existe no MongoDB
+          const existingProduct = await Produto.findOne({
+            codigo_ideal: products.codigo,
+          });
+
+          if (!existingProduct) {
+
+            results.push({
+              error: `Produto com código ${products.codigo} não encontrado no MongoDB.`,
+            });
+            return; // Pular para o próximo produto se não existir
+          }
+
+          // Obtendo a posição das imagens dos produtos da Idealsoft
+          const { data: imgProductposition } = await axios.get<ApiResponse>(
+            `http://10.0.0.44:60002/fotos/${existingProduct.codigo_ideal}`,
+            {
+              headers: headersIdeal,
+            }
+          );
+
+          // Verificar se o produto tem fotos
+          if (imgProductposition.dados.fotos.length === 0) {
+
+            results.push({
+              error: `Produto com código ${existingProduct.codigo_ideal} não possui fotos.`,
+            });
+            return; // Pular para o próximo produto se não houver fotos
+          }
+
+          const productId = existingProduct.codigo_ideal; // Obtendo o ID do produto criado
+
+          if (!productId) {
+
+            results.push({
+              error: `Produto com código ${existingProduct.codigo_ideal} não possui ID.`,
+            });
+            return; // Pular para o próximo produto se não houver ID
+          }
+
+          // Loop para buscar cada foto com base na posição
+          for (const foto of imgProductposition.dados.fotos) {
+            // Obter a imagem do produto da Idealsoft em base64 para cada posição
+            const { data: imgProduct } = await axios.get<ArrayBuffer>(
+              `http://10.0.0.44:60002/fotos/${existingProduct.codigo_ideal}/${foto.posicao}`,
+              {
+                headers: headersIdeal,
+                responseType: "arraybuffer", // Garantir que estamos recebendo um array de bytes (binário)
+              }
+            );
+            
+
+            // Converte a resposta binária para base64
+            const base64Img = Buffer.from(new Uint8Array(imgProduct)).toString(
+              "base64"
+            );
+            // Monta a URL da imagem
+            const { url, key } = await uploadToS3(base64Img, `produtos/${productId}`, `img-${foto.posicao}`);
+
+            // Adiciona a imagem ao produto existente
+            if (!Array.isArray(existingProduct.imgs)) {
+              existingProduct.imgs = [{ url: "", key: "" }];
+            }
+            existingProduct.imgs.push({ url, key });
+            await existingProduct.save();
+
+
+          }
+
+          results.push(
+            `Imagens do produto ${existingProduct.codigo_ideal} foram adicionadas com sucesso.`
+          );
+        } catch (error: any) {
+          console.log(
+            `Erro ao processar o produto ${products.codigo}: ${error.message}`
+          );
+          results.push({
+            error: `Erro ao adicionar imagem para o produto ${products.codigo}: ${error.message}`,
+          });
+        }
+    
+
+      res.status(200).json(results);
+    } catch (error) {
+      console.log(error);
+      res
+        .status(500)
+        .json({ msg: "Erro no servidor, tente novamente mais tarde" });
+    }
+  },
+   sinc_metadados_IA: async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    try {
+      // Pegar o admin com id
+      const id_loja = req.headers.user_store_id as string;
+      const user_store_id = req.headers.id as string;
+
+
+      // Obter credenciais usando o serviço
+      const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
+
+      // 1. Primeiro, obtenha o token de autenticação
+      const token = await authService.getAuthToken(serie, codFilial, api);
+
+      const method = "get";
+      const body = "";
+
+      // Assumindo que o corpo está vazio para requisição GET
+      const { signature, timestamp } = generateSignature(method, senha, body);
+
+      // 2. Configuração do cabeçalho da requisição
+      const headers = {
+        Signature: signature,
+        CodFilial: codFilial,
+        Authorization: `Token ${token}`,
+        Timestamp: timestamp.toString(),
+      };
+
+      const product = req.body; // O corpo da requisição deve conter o array de produtos
+
+      const results = []; // Array para armazenar os resultados dos produtos enviados
+
+ 
+        try {
+          // Verificar se o Produto já existe no MongoDB
+           const existingProduct = await Produto.findOne({
+          codigo_ideal: product.codigo,
+        });
+
+          if (!existingProduct) {
+            console.log(`Produto ${product.id} não encontrado no MongoDB`);
+            results.push({
+              error: `Produto com ID ${product.id} não encontrado no MongoDB.`,
+            });
+            return; // Adicionado para evitar uso de existingProduct nulo
+          }
+          // 2. Fazer a chamada para pegar o objeto produto com as URLs
+          const { data: produtoDetalhes } = await axios.get<{
+            dados: ProductDetalhesResponse;
+          }>(`http://10.0.0.44:60002/produtos/detalhes/${existingProduct.codigo_ideal}`, {
+            headers,
+          });
+
+          if (!produtoDetalhes.dados.observacao1) {
+            results.push({
+              msg: `Insira uma descrição no produto:${existingProduct?.codigo_ideal} dentro da shop9`,
+            });
+            
+          }
+          
+          // Envia a requisição para a Nuvemshop para deletar o produto
+          const { data: iaagente } = await axios.post<responseIA>(
+            `https://n8n.croi.tech/webhook/9e21a663-8494-432b-841c-8c69603886c4`,
+            {
+              nome_produto: String(produtoDetalhes.dados.nome),
+              "descricaotecnica ": String(produtoDetalhes.dados.observacao1),
+            },
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (!iaagente) {
+            res.status(500).json({ msg: "deuerrado" });
+          }
+
+          // Função para extrair dados entre as tags
+          function extractBetweenTags(text: string, tag: string) {
+            const regex = new RegExp(`<${tag}>(.*?)<\/${tag}>`, "s"); // 's' para pegar múltiplas linhas
+            const match = text.match(regex);
+            return match ? match[1].trim() : null;
+          }
+
+          // Acessando o campo 'output' do array e separando os elementos
+          const output = iaagente.output; // Pegando o primeiro item do array
+          const seoTitle = extractBetweenTags(output, "seo_title");
+          const seoDescription = extractBetweenTags(output, "seo_description");
+          const productCopy = extractBetweenTags(output, "product_copy");
+          const productSpecs = extractBetweenTags(output, "product_specs");
+          
+
+          const productData =     {
+              description: `
+              <p>${productCopy}</p>\n</br>
+              Código:${existingProduct?.codigo_ideal}\n</br>
+              <p>${productSpecs}</p>`,
+              seo_title: seoTitle,
+              seo_description: seoDescription,
+            }
+          // Atualizando o produto no MongoDB com os dados gerados
+            existingProduct.seotitle = seoTitle ?? undefined;
+          existingProduct.seodescription = seoDescription ?? undefined;
+            existingProduct.description = productData.description;
+            /* salvar */
+          await existingProduct.save();
+
+          results.push(
+            `Descrição e Metadados Gerados com sucesso Produto:${product.codigo}`
+          );
+        } catch (error: any) {
+          console.log(error);
+          // Caso ocorra um erro ao tentar excluir o produto na Nuvemshop
+          results.push({
+            error: error.message,
+            idealProductId: product.codigo,
+            obs: "Erro ao tentar deletar produto", // Registra o erro no array de resultados
+          });
+        }
+      
+
+      res.status(200).json(results);
+    } catch (error) {
+      console.error("Erro no servidor:", error);
+      res
+        .status(500)
+        .json({ msg: "Erro no servidor, tente novamente mais tarde" });
     }
   },
 

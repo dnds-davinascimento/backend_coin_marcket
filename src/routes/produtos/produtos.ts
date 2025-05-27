@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import produtoControllers from "../../controllers/produtoControllers";
-import { checkToken, permissionsMiddleware } from '../../middlewares/checkToken'; 
+import { checkToken, permissionsMiddleware } from '../../middlewares/checkToken';
 
 const router: Router = Router();
 
@@ -258,36 +258,56 @@ const router: Router = Router();
  */
 router.route("/products").post(
   checkToken,
-  permissionsMiddleware('product'), 
+  permissionsMiddleware('product'),
   (req: Request, res: Response) => produtoControllers.createProduct(req, res)
 );
 /* rota de buscar produto por loja getProductsByStore */
 router.route("/products").get(
 
-  
+
   (req: Request, res: Response) => produtoControllers.getProductsByStore(req, res)
 );
 /* rota de buscar produto por id getProductById */
 router.route("/products/:id").get(
   checkToken,
-  permissionsMiddleware('product'), 
+  permissionsMiddleware('product'),
   (req: Request, res: Response) => produtoControllers.getProductById(req, res)
 );
 /* rota de deletar produto por id editProductById */
 router.route("/products/:id").delete(
   checkToken,
-  permissionsMiddleware('product'), 
+  permissionsMiddleware('product'),
   (req: Request, res: Response) => produtoControllers.deleteProductById(req, res)
 );
 /* rota de editar produto por id editProductById */
 router.route("/products/:id").put(
-    checkToken,
-    permissionsMiddleware('product'), 
-    (req: Request, res: Response) => produtoControllers.updateProductById(req, res)
-    );
+  checkToken,
+  permissionsMiddleware('product'),
+  (req: Request, res: Response) => produtoControllers.updateProductById(req, res)
+);
 router.route("/sincProducts").post(
-/*     checkToken,
-    permissionsMiddleware('product'),  */
-    (req: Request, res: Response) => produtoControllers.sincProducts(req, res)
-    );
+  /*     checkToken,
+      permissionsMiddleware('product'),  */
+  (req: Request, res: Response) => produtoControllers.sincProducts(req, res)
+);
+router.route("/getProdutodetalhes").get(
+  /*     checkToken,
+      permissionsMiddleware('product'),  */
+  (req: Request, res: Response) => produtoControllers.getProdutodetalhes(req, res)
+);
+router.route("/postsingleProductsNuvemShop").post(
+  /*     checkToken,
+      permissionsMiddleware('product'),  */
+  (req: Request, res: Response) => produtoControllers.postsingleProductsNuvemShop(req, res)
+);
+router.route("/sinc_img_Product").post(
+  /*     checkToken,
+      permissionsMiddleware('product'),  */
+  (req: Request, res: Response) => produtoControllers.sinc_img_Product(req, res)
+);
+router.route("/sinc_metadados_IA").post(
+  /*     checkToken,
+      permissionsMiddleware('product'),  */
+  (req: Request, res: Response) => produtoControllers.sinc_metadados_IA(req, res)
+);
 export default router;
