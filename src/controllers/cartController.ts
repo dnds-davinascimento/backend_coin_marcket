@@ -122,6 +122,7 @@ const cartController = {
       // Busca carrinhos ativos do cliente (status diferente de finalizado)
       let carrinhoAtivo = await Cart.findOne({ 
         "consumidor.id": custumer_id
+        , "status_Cart": { $ne: "finalizado" }
         
       });
 
