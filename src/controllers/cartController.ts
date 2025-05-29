@@ -110,8 +110,8 @@ const cartController = {
         un: 'un', // Unidade padrão
         preco_de_Venda: produtoBody.price,
         preco_de_custo: 0, // Pode ajustar conforme sua lógica
-        desconto: produtoBody.price - produtoBody.discountedPrice, // Calcula o desconto
-        precoTotal: produtoBody.discountedPrice, // Usa o preço com desconto
+        desconto: 0, // Calcula o desconto
+        precoTotal: produtoBody.price , // Usa o preço com desconto
         estoque: produtoBody.stock,
         status: 'pendente',
         codigo_interno: '', // Pode ajustar conforme sua lógica
@@ -138,8 +138,8 @@ const cartController = {
           },
           produtos: [produtoCart],
           ItensTotal: 1, // 1 item inicial
-          valorTotal: produtoBody.discountedPrice, // Total inicial
-          valor_de_Desconto: produtoBody.price - produtoBody.discountedPrice, // Desconto total
+          valorTotal: produtoBody.price, // Total inicial
+          
           status_Cart: 'aberto',
           historico: [{
             acao: `Carrinho criado com produto ${produtoBody.title}`,
@@ -165,9 +165,8 @@ const cartController = {
           carrinhoAtivo.produtos[produtoExistenteIndex].quantidade += 1;
           // Recalcula o preço total do produto
           const precoUnitario = carrinhoAtivo.produtos[produtoExistenteIndex].preco_de_Venda;
-          const descontoUnitario = carrinhoAtivo.produtos[produtoExistenteIndex].desconto;
-          carrinhoAtivo.produtos[produtoExistenteIndex].precoTotal = 
-            (precoUnitario * carrinhoAtivo.produtos[produtoExistenteIndex].quantidade) - descontoUnitario;
+          
+          carrinhoAtivo.produtos[produtoExistenteIndex].precoTotal =  (precoUnitario * carrinhoAtivo.produtos[produtoExistenteIndex].quantidade);
         } else {
           // Adiciona novo produto ao carrinho existente
           carrinhoAtivo.produtos.push(produtoCart);
@@ -182,17 +181,15 @@ const cartController = {
           (total, prod) => total + prod.precoTotal, 0
         );
         
-        carrinhoAtivo.valor_de_Desconto = carrinhoAtivo.produtos.reduce(
-          (total, prod) => total + (prod.desconto || 0), 0
-        );
+     
 
         // Adiciona registro no histórico
-        carrinhoAtivo.historico.push({
+/*         carrinhoAtivo.historico.push({
           acao: produtoExistenteIndex >= 0 
             ? `Quantidade do produto ${produtoBody.title} incrementada (+1)` 
             : `Produto ${produtoBody.title} adicionado ao carrinho`,
           data: new Date()
-        });
+        }); */
 
         const carrinhoAtualizado = await carrinhoAtivo.save();
         
@@ -348,9 +345,8 @@ const cartController = {
       
       // Recalcula o preço total do produto
       const precoUnitario = carrinhoAtivo.produtos[produtoIndex].preco_de_Venda;
-      const descontoUnitario = carrinhoAtivo.produtos[produtoIndex].desconto || 0;
-      carrinhoAtivo.produtos[produtoIndex].precoTotal = 
-        (precoUnitario * carrinhoAtivo.produtos[produtoIndex].quantidade) - descontoUnitario;
+     /*  const descontoUnitario = carrinhoAtivo.produtos[produtoIndex].desconto || 0; */
+      carrinhoAtivo.produtos[produtoIndex].precoTotal = (precoUnitario * carrinhoAtivo.produtos[produtoIndex].quantidade);
 
       // Atualiza totais do carrinho
       carrinhoAtivo.ItensTotal = carrinhoAtivo.produtos.reduce(
@@ -361,15 +357,15 @@ const cartController = {
         (total, prod) => total + prod.precoTotal, 0
       );
       
-      carrinhoAtivo.valor_de_Desconto = carrinhoAtivo.produtos.reduce(
+  /*     carrinhoAtivo.valor_de_Desconto = carrinhoAtivo.produtos.reduce(
         (total, prod) => total + (prod.desconto || 0), 0
-      );
+      ); */
 
       // Registra no histórico
-      carrinhoAtivo.historico.push({
+/*       carrinhoAtivo.historico.push({
         acao: `Quantidade do produto ${carrinhoAtivo.produtos[produtoIndex].nome} aumentada para ${carrinhoAtivo.produtos[produtoIndex].quantidade}`,
         data: new Date()
-      });
+      }); */
 
       const carrinhoAtualizado = await carrinhoAtivo.save();
       
@@ -438,9 +434,8 @@ const cartController = {
       
       // Recalcula o preço total do produto
       const precoUnitario = carrinhoAtivo.produtos[produtoIndex].preco_de_Venda;
-      const descontoUnitario = carrinhoAtivo.produtos[produtoIndex].desconto || 0;
-      carrinhoAtivo.produtos[produtoIndex].precoTotal = 
-        (precoUnitario * carrinhoAtivo.produtos[produtoIndex].quantidade) - descontoUnitario;
+      
+      carrinhoAtivo.produtos[produtoIndex].precoTotal = (precoUnitario * carrinhoAtivo.produtos[produtoIndex].quantidade);
 
       // Atualiza totais do carrinho
       carrinhoAtivo.ItensTotal = carrinhoAtivo.produtos.reduce(
@@ -451,15 +446,15 @@ const cartController = {
         (total, prod) => total + prod.precoTotal, 0
       );
       
-      carrinhoAtivo.valor_de_Desconto = carrinhoAtivo.produtos.reduce(
+/*       carrinhoAtivo.valor_de_Desconto = carrinhoAtivo.produtos.reduce(
         (total, prod) => total + (prod.desconto || 0), 0
-      );
+      ); */
 
       // Registra no histórico
-      carrinhoAtivo.historico.push({
+/*       carrinhoAtivo.historico.push({
         acao: `Quantidade do produto ${carrinhoAtivo.produtos[produtoIndex].nome} diminuída para ${carrinhoAtivo.produtos[produtoIndex].quantidade}`,
         data: new Date()
-      });
+      }); */
 
       const carrinhoAtualizado = await carrinhoAtivo.save();
       

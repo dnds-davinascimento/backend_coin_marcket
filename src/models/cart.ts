@@ -104,7 +104,7 @@ const cartSchema = new Schema<ICart>(
       un: { type: String, required: false },
       preco_de_Venda: { type: Number, required: false },
       preco_de_custo: { type: Number, required: false },
-      desconto: { type: Number, required: false },
+      desconto: { type: Number, required: false, default: 0 },
       precoTotal: { type: Number, required: false },
       estoque: { type: Number, required: false },
  
@@ -117,7 +117,7 @@ const cartSchema = new Schema<ICart>(
     ],
     }],
     valorTotal: { type: Number, required: true },
-    valor_de_Desconto: { type: Number, required: true },
+    valor_de_Desconto: { type: Number, required: false},
  
   },
   { timestamps: true }

@@ -10,6 +10,7 @@ import { obterCredenciais } from "../services/credenciaisService";
 import { generateSignature } from "../services/generateSignature";
 import authService from "../services/authService";
 import Admin from "../models/Admin";
+import User from "../models/user";
 dotenv.config(); // Carregar as variáveis de ambiente
 
 // Função de envio de e-mail atualizada
@@ -22,8 +23,8 @@ const sendEmail = async (
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: "venda.croi.ns@gmail.com",
-      pass: "dehq eejp kpql xcjc",
+      user: process.env.EMAIL, // Use suas variáveis de ambiente para segurança
+      pass: process.env.PASSWORD, // Use suas variáveis de ambiente para segurança
     },
   });
 
@@ -615,6 +616,9 @@ const produto_Schema = {
       // Obter as credenciais do usuário
       const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
 
+  const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
+
+
       // Obter o token de autenticação para Idealsoft
       const token = await authService.getAuthToken(serie, codFilial, api);
       const method = "get";
@@ -654,7 +658,7 @@ const produto_Schema = {
       while (!fimDePagina) {
         const { data: produtosPagina } =
           await axios.get<Response_ideal_product_pagination>(
-            `http://10.0.0.44:60002/produtos/${paginaIdeal}`,
+            `${url_ideal}/produtos/${paginaIdeal}`,
             { headers: headersIdeal }
           );
 
@@ -701,7 +705,7 @@ const produto_Schema = {
               user_store_id: "6807ab4fbaead900af4db229" as string,
             };
             const respose = await axios.post<responseCriarproduto>(
-              `http://localhost:4000/api/postsingleProductsNuvemShop`,
+              `${process.env.URL_BACKEND}/api/postsingleProductsNuvemShop`,
               produto,
               {
                 headers,
@@ -725,7 +729,7 @@ const produto_Schema = {
       }
 
 
-      /*       // Enviar email após a sincronização
+            // Enviar email após a sincronização
             const emails = [];
             if (admin.paymentAlert === true) {
               emails.push(admin.email);
@@ -734,11 +738,11 @@ const produto_Schema = {
             const users = admin ? await User.find({ user_store_id: admin._id, paymentAlert: true }) : [];
             // Adiciona os emails dos usuários encontrados
             emails.push(...users.map(user => user.email));
-            // Enviar e-mail com o erro */
+            // Enviar e-mail com o erro
 
 
       // Calcular o tempo total de sincronização
-      /*       const fimSincronizacao = Date.now();
+            const fimSincronizacao = Date.now();
             const tempoTotal = (fimSincronizacao - inicioSincronizacao) / 1000; // em segundos
             console.log(`Tempo total de sincronização: ${tempoTotal} segundos`);
             await sendEmail(
@@ -746,7 +750,7 @@ const produto_Schema = {
               produtosIdeal.length,
               produtosCadastrados,
               tempoTotal
-            ); */
+            );
 
 
     } catch (error) {
@@ -765,7 +769,7 @@ const produto_Schema = {
 
       // Obter credenciais usando o serviço
       const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
-
+  const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
       // 1. Obtenha o token de autenticação
       const token = await authService.getAuthToken(serie, codFilial, api);
 
@@ -792,11 +796,11 @@ const produto_Schema = {
       // 2. Fazer a chamada para pegar o objeto produto com as URLs
       const { data: produtoDetalhes } = await axios.get<{
         dados: ProductDetalhesResponse;
-      }>(`http://10.0.0.44:60002/produtos/detalhes/${codigoProduto}`, { headers });
+      }>(`${url_ideal}/produtos/detalhes/${codigoProduto}`, { headers });
 
       // Agora que temos as URLs, vamos realizar as outras requisições (estoque, preços)
-      const urlEstoque = `http://10.0.0.44:60002/estoque/${codigoProduto}`;
-      const urlPrecos = `http://10.0.0.44:60002/precos/${codigoProduto}`;
+      const urlEstoque = `${url_ideal}/estoque/${codigoProduto}`;
+      const urlPrecos = `${url_ideal}/precos/${codigoProduto}`;
 
       const [estoqueResponse, precoResponse] = await Promise.all([
         axios.get<EstoqueResponse>(urlEstoque, { headers }), // Tipando a resposta de estoque
@@ -860,7 +864,7 @@ const produto_Schema = {
           categoria_codigo: codigoClasse,
         }
         const { data: resposeCategoria } = await axios.post<CategoriaResponse>(
-          `http://localhost:4000/api/createCategoriaShop9`,
+          `${process.env.URL_BACKEND}/api/createCategoriaShop9`,
           bodyCategoria,
           {
             headers,
@@ -875,7 +879,7 @@ const produto_Schema = {
           parient: resposeCategoria.data.codigo_ideal, // Usando o ID da categoria criada
         };
         const { data: resposeSubCategoria } = await axios.post<CategoriaResponse>(
-          `http://localhost:4000/api/createSubCategoriaShop9`,
+          `${process.env.URL_BACKEND}/api/createSubCategoriaShop9`,
           bodySubCategoria,
           {
             headers,
@@ -937,14 +941,14 @@ const produto_Schema = {
 
         /* sincronizar img */
         const response_img = await axios.post(
-          `http://localhost:4000/api/sinc_img_Product`,
+          `${process.env.URL_BACKEND}/api/sinc_img_Product`,
           product,
           { headers }
         );
         console.log("Imagens sincronizadas:", response_img.data);
         /* generate metados IA */
         const response_IA = await axios.post<responseIA>(
-          `http://localhost:4000/api/sinc_metadados_IA`,
+          `${process.env.URL_BACKEND}/api/sinc_metadados_IA`,
           product,
           { headers }
         );
@@ -993,7 +997,7 @@ const produto_Schema = {
 
 
         const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
-
+  const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
       // Obter o token de autenticação para Idealsoft
       const token = await authService.getAuthToken(serie, codFilial, api);
       const method = "get";
@@ -1027,7 +1031,7 @@ const produto_Schema = {
 
           // Obtendo a posição das imagens dos produtos da Idealsoft
           const { data: imgProductposition } = await axios.get<ApiResponse>(
-            `http://10.0.0.44:60002/fotos/${existingProduct.codigo_ideal}`,
+            `${url_ideal}/fotos/${existingProduct.codigo_ideal}`,
             {
               headers: headersIdeal,
             }
@@ -1056,7 +1060,7 @@ const produto_Schema = {
           for (const foto of imgProductposition.dados.fotos) {
             // Obter a imagem do produto da Idealsoft em base64 para cada posição
             const { data: imgProduct } = await axios.get<ArrayBuffer>(
-              `http://10.0.0.44:60002/fotos/${existingProduct.codigo_ideal}/${foto.posicao}`,
+              `${url_ideal}/fotos/${existingProduct.codigo_ideal}/${foto.posicao}`,
               {
                 headers: headersIdeal,
                 responseType: "arraybuffer", // Garantir que estamos recebendo um array de bytes (binário)
@@ -1114,7 +1118,7 @@ const produto_Schema = {
 
       // Obter credenciais usando o serviço
       const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
-
+  const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
       // 1. Primeiro, obtenha o token de autenticação
       const token = await authService.getAuthToken(serie, codFilial, api);
 
@@ -1153,7 +1157,7 @@ const produto_Schema = {
           // 2. Fazer a chamada para pegar o objeto produto com as URLs
           const { data: produtoDetalhes } = await axios.get<{
             dados: ProductDetalhesResponse;
-          }>(`http://10.0.0.44:60002/produtos/detalhes/${existingProduct.codigo_ideal}`, {
+          }>(`${url_ideal}/produtos/detalhes/${existingProduct.codigo_ideal}`, {
             headers,
           });
 
