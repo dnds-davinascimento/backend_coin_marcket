@@ -64,7 +64,11 @@ const cartController = {
      
 
       // Busca os carrinhos do consumidor
-      const carrinhos = await Cart.find({ "consumidor.id": custumer_id });
+      const carrinhos = await Cart.findOne({ 
+        "consumidor.id": custumer_id
+        , "status_Cart": { $ne: "finalizado" }
+        
+      });
       
       return res.status(200).json(carrinhos);
     } catch (error) {
