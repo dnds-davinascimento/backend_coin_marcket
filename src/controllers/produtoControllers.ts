@@ -11,6 +11,7 @@ import { generateSignature } from "../services/generateSignature";
 import authService from "../services/authService";
 import Admin from "../models/Admin";
 import User from "../models/user";
+import { Categoria } from "../models/categoria";
 dotenv.config(); // Carregar as variáveis de ambiente
 
 // Função de envio de e-mail atualizada
@@ -431,7 +432,6 @@ const produto_Schema = {
     }
     const { nome, categoria, codigo_interno } = req.query;
 
-
     const query: any = {
       produto_da_loja: id_loja, // Filtro para buscar produtos da loja específica
     };
@@ -440,12 +440,26 @@ const produto_Schema = {
       query.nome = { $regex: new RegExp(nome as string, "i") };
     }
 
-    if (categoria) {
-      // Correção: Verifica se a categoria existe antes de acessar .id
-      query["categoria.id"] = categoria; // Alternativa mais segura
-      // Ou se sua estrutura for diferente:
-      // query.categoria = { id: categoria };
+ if (categoria) {
+  if (typeof categoria === 'string') {
+    const subcategoria = await Categoria.findById(categoria);
+    
+    // Ajuste: Verifique se subcategoria possui um campo que identifica subcategoria, por exemplo, 'parient' ou similar
+    if (subcategoria && (subcategoria as any).parient) {
+      query["categoria.subcategorias.id"] = new Types.ObjectId(categoria); // Subcategoria
+    } else {
+      query["categoria.id"] = new Types.ObjectId(categoria); // Categoria normal (id como string)
     }
+
+  } else if (typeof categoria === 'object' && categoria) {
+    query["categoria"] = new Types.ObjectId(
+      typeof categoria === "string" ? categoria : Array.isArray(categoria) && typeof categoria[0] === "string"
+        ? categoria[0]
+        : ""
+    ); // Objeto com id
+  }
+}
+
 
     if (codigo_interno) {
       query.codigo_interno = { $regex: new RegExp(codigo_interno as string, "i") };

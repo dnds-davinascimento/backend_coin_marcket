@@ -90,7 +90,7 @@ const venda_Schema = {
         },
         consumidor: {
           id: custumer._id.toString(),
-          cpf: custumer.taxId,
+          cpf: custumer.cpf_cnpj?.toString(),
           nome: custumer.name,
           email: custumer.email,
           contato: custumer.phone,

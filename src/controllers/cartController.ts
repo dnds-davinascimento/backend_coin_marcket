@@ -135,7 +135,7 @@ const cartController = {
         const novoCarrinho = new Cart({
           consumidor: {
             id: consumidor._id.toString(),
-            cpf: consumidor.taxId,
+            cpf: consumidor.cpf_cnpj,
             nome: consumidor.name,
             email: consumidor.email || '',
             contato: consumidor.phone || '',

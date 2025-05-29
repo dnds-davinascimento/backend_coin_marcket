@@ -15,11 +15,14 @@ const customerController = {
       type,
       indicatorStateRegistration,
       phone,
-      taxId,
+        rg,
+
+      cpf_cnpj,
       stateRegistration,
       tier,
       thumbnail,
-      // thumbnail: { url, key },
+      razao_social,
+      nome_fantasia,
       endereco
     } = req.body;
     let { store } = req.body; // A loja pode ser passada no corpo da requisição
@@ -56,8 +59,8 @@ const customerController = {
       }
 
       // Verificar se CPF/CNPJ já existe
-      if (taxId) {
-        const existingTaxId = await Customer.findOne({ taxId });
+      if (cpf_cnpj) {
+        const existingTaxId = await Customer.findOne({cpf_cnpj });
         if (existingTaxId) {
           res.status(400).json({ msg: "Já existe um cliente com este CPF/CNPJ" });
           return;
@@ -75,17 +78,19 @@ const customerController = {
       const newCustomer = new Customer({
         name,
         email,
+        razao_social: razao_social || null,
+        nome_fantasia: nome_fantasia || null,
+        rg: rg || null, // Registro Geral (opcional)
         thumbnail: thumbnail || null,
         password: hashedPassword,
         type: type || 'individual',
         indicador_IE: indicatorStateRegistration || 0,
         phone,
-        taxId,
+        cpf_cnpj,
         stateRegistration,
         tier: tier || 'regular',
         store,
         endereco,
-        
         creditBalance: 0,
         cashbackBalance: 0,
         monthlyPurchases: [],
@@ -137,7 +142,7 @@ const customerController = {
   /* função para editar customer pelo id */
   updateCustomer: async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
-    const { name, email, password, type, indicatorStateRegistration, phone, taxId, stateRegistration, tier,endereco,thumbnail } = req.body;
+    const { name, email, password, type, indicatorStateRegistration, phone, cpf_cnpj, stateRegistration, tier,endereco,thumbnail, rg,razao_social,nome_fantasia } = req.body;
 
     try {
       const customer = await Customer.findById(id);
@@ -149,10 +154,14 @@ const customerController = {
       // Atualiza os campos do cliente
       customer.name = name || customer.name;
       customer.email = email || customer.email;
+      customer.razao_social = razao_social || customer.razao_social; // Atualiza a razão social
+      customer.nome_fantasia = nome_fantasia || customer.nome_fantasia; // Atualiza o nome fantasia 
+      customer.rg = rg || customer.rg; // Atualiza o Registro Geral (opcional)
+
       customer.type = type || customer.type;
       customer.indicador_IE = indicatorStateRegistration || customer.indicador_IE;
       customer.phone = phone || customer.phone;
-      customer.taxId = taxId || customer.taxId;
+      customer.cpf_cnpj = cpf_cnpj || customer.cpf_cnpj;
       customer.stateRegistration = stateRegistration || customer.stateRegistration;
       customer.tier = tier || customer.tier;
       customer.endereco = endereco || customer.endereco;

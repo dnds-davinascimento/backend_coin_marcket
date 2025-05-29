@@ -20,12 +20,16 @@ interface ITransactionHistory {
 interface ICustomer extends Document {
     _id:ObjectId;
     name: string;
+    razao_social?: string; // Razão social (opcional, apenas para empresas)
+    nome_fantasia?: string; // Nome fantasia (opcional, apenas para empresas)
+    rg?: string; // Registro Geral (opcional)
+    cpf_cnpj?: string; // Cadastro Nacional de Pessoa Jurídica (opcional)
     email?: string;
+    status?: string; // Status do cliente (ativo, inativo, etc.)
     password: string; // Senha do cliente (opcional, se necessário)
     type?: string;
     indicador_IE?: number; // Indicador IE
     phone?: string;
-    taxId?: string; // CPF/CNPJ
     stateRegistration?: string; // Inscrição Estadual
     tier?: string; // Nível do cliente
     monthlyPurchases: IMonthlyPurchase[];
@@ -82,6 +86,27 @@ const customerSchema = new Schema<ICustomer>({
         required: [true, 'Customer name is required'],
         trim: true
     },
+    razao_social: {
+        type: String,
+        trim: true,
+        required: function(this: any) { return this.type === 'company'; } // Obrigatório apenas para empresas
+    },
+    nome_fantasia: {
+        type: String,
+        trim: true,
+        required: function(this: any) { return this.type === 'company'; } // Obrigatório apenas para empresas
+    },
+    rg: {
+        type: String,
+        trim: true
+    },
+    cpf_cnpj: {
+        type: String,
+        trim: true,
+        unique: true, // Garantir que CPF/CNPJ seja único
+        sparse: true // Permitir valores nulos
+    },
+
     thumbnail: {
         key: {
           type: String,
@@ -103,6 +128,7 @@ const customerSchema = new Schema<ICustomer>({
         trim: true,
         select: false // Não retornar a senha por padrão
     },
+    status: { type: String, default: 'em análise', enum: ['em análise', 'ativo', 'inativo'] }, // Status do cliente
     type: {
         type: String,
         enum: ['individual', 'company'],
@@ -113,10 +139,6 @@ const customerSchema = new Schema<ICustomer>({
         trim: true
     },
     phone: {
-        type: String,
-        trim: true
-    },
-    taxId: {
         type: String,
         trim: true
     },
@@ -156,7 +178,7 @@ const customerSchema = new Schema<ICustomer>({
 // Índices para melhor performance
 customerSchema.index({ name: 1 });
 customerSchema.index({ email: 1 }, { unique: true, sparse: true });
-customerSchema.index({ taxId: 1 }, { unique: true, sparse: true });
+customerSchema.index({ cpf_cnpj: 1 }, { unique: true, sparse: true });
 customerSchema.index({ store: 1 });
 
 const Customer = mongoose.model<ICustomer>('Customer', customerSchema);
