@@ -127,10 +127,10 @@ const venda_Schema = {
       const cart = await Cart.findOne({ 'consumidor.id': custumerId });
 
       if (cart) {
-        cart.produtos = [];
+/*         cart.produtos = [];
         cart.ItensTotal = 0;
         cart.valorTotal = 0;
-        cart.valor_de_Desconto = 0;
+        cart.valor_de_Desconto = 0; */
         cart.status_Cart = "finalizado";
         
         cart.historico.push({
