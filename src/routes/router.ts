@@ -10,6 +10,7 @@ import lojaRouter from "./loja/loja"
 import categoriaRouter from "./categoria/categoria"
 import cartRouter from "./cart/cart"
 import credenciaisRouter from "./credenciais/credenciais";
+import docsCustomersRouter from "./docsCustomers/docsCustomers";
 
 
 const router: Router = Router();
@@ -26,6 +27,7 @@ router.use("/", categoriaRouter);
 router.use("/",cartRouter);
 router.use("/",vendaRouter);
 router.use("/", credenciaisRouter);
+router.use("/", docsCustomersRouter);
 
 
 

@@ -103,8 +103,6 @@ const customerSchema = new Schema<ICustomer>({
     cpf_cnpj: {
         type: String,
         trim: true,
-        unique: true, // Garantir que CPF/CNPJ seja único
-        sparse: true // Permitir valores nulos
     },
 
     thumbnail: {

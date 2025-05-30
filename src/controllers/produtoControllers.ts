@@ -1087,7 +1087,7 @@ const produto_Schema = {
               "base64"
             );
             // Monta a URL da imagem
-            const { url, key } = await uploadToS3(base64Img, `produtos/${productId}`, `img-${foto.posicao}`);
+            const { url, key } = await uploadToS3(base64Img, `products`, `img-${foto.posicao}`);
 
             // Adiciona a imagem ao produto existente
             if (!Array.isArray(existingProduct.imgs)) {

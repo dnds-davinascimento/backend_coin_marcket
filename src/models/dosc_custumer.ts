@@ -12,7 +12,6 @@ export interface DocumentCustomer extends Document {
   status?: string;
   rg_frente?: DocumentoArquivo;
   rg_verso?: DocumentoArquivo;
-  cpf?: DocumentoArquivo;
   cnh_frente?: DocumentoArquivo;
   cnh_verso?: DocumentoArquivo;
   comprovante_residencia?: DocumentoArquivo;
@@ -31,10 +30,6 @@ const documentCustomerSchema = new Schema<DocumentCustomer>({
     key: String
   },
   rg_verso: {
-    url: String,
-    key: String
-  },
-  cpf: {
     url: String,
     key: String
   },
