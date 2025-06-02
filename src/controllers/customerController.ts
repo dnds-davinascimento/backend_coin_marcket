@@ -210,9 +210,9 @@ const customerController = {
   },
   /* função para buscar customers por loja */
   getCustomersByStore: async (req: Request, res: Response): Promise<void> => {
-    const { storeId } = req.params;
+          const id_loja = req.headers.user_store_id as string;
     try {
-      const customers = await Customer.find({ store: storeId }).populate("store", "name"); // Popula o campo "store" com o nome da loja
+      const customers = await Customer.find({ store: id_loja })
       if (customers.length === 0) {
         res.status(404).json({ msg: "Nenhum cliente encontrado para esta loja" });
         return;

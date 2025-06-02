@@ -125,5 +125,8 @@ router.route("/updateCustomer/:id").put(
 router.route("/getCustomerById/:id").get(
     (req: Request, res: Response) => customerControllers.getCustomerById(req, res)
   );
+router.route("/getCustomersByStore").get(
+    (req: Request, res: Response) => customerControllers.getCustomersByStore(req, res)
+  );
 
 export default router;

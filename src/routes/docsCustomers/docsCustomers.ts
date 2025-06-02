@@ -14,6 +14,9 @@ router.route("/saveDocumentosCustomers").post(
 router.route("/getDocumentosCustomers").get(
     (req: Request, res: Response) => docsCustomersController.getDocumentosCustomers(req, res)
   );
+router.route("/getDocumentosCustomersById/:id").get(
+    (req: Request, res: Response) => docsCustomersController.getDocumentosCustomersById(req, res)
+  );
 
 
 export default router;

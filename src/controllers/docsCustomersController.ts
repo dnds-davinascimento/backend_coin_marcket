@@ -95,7 +95,22 @@ const documentController = {
       console.error('Erro ao buscar documentos:', error);
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
-  }
+  },
+  /* pegar docs por id docustomer */
+   getDocumentosCustomersById: async (req: Request, res: Response) => {
+     try {
+       const { id } = req.params as { id: string };
+       if (!id) {
+          return res.status(400).json({ error: 'ID do cliente é obrigatório.' });
+        }
+       const documentos = await DocumentCustomerModel.findOne({ customer_id: id });
+     
+       res.status(200).json(documentos);
+     } catch (error) {
+       console.error('Erro ao buscar documentos por ID:', error);
+       res.status(500).json({ error: 'Erro interno do servidor' });
+     }
+   } 
     
 
 };
