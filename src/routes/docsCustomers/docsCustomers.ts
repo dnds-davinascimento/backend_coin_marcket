@@ -11,6 +11,9 @@ router.route("/s3-signed-url").put(
 router.route("/saveDocumentosCustomers").post(
     (req: Request, res: Response) => docsCustomersController.saveDocumentosCustomers(req, res)
   );
+router.route("/approveDocsCustomerStatus/:id").post(
+    (req: Request, res: Response) => docsCustomersController.approveDocsCustomerStatus(req, res)
+  );
 router.route("/getDocumentosCustomers").get(
     (req: Request, res: Response) => docsCustomersController.getDocumentosCustomers(req, res)
   );

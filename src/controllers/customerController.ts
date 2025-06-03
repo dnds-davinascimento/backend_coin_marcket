@@ -3,6 +3,7 @@ import { Customer } from "../models/custumer"; // Importa o model Customer
 import { Loja } from "../models/loja"; // Importa o model Loja
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
+import DocumentCustomerModel from "../models/dosc_custumer";
 
 dotenv.config();
 
@@ -123,7 +124,6 @@ const customerController = {
       });
     }
   },
-
   /* buscar custumers por id */
   getCustomerById: async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
@@ -219,9 +219,49 @@ const customerController = {
       }
       res.status(200).json(customers);
     } catch (error) {
-      console.error("Erro ao buscar clientes por loja:", error);
+      
       res.status(500).json({ msg: "Erro no servidor ao buscar clientes por loja" });
     }
+  },
+  /* função para aprovar status do cutomers */
+  approveCustomerStatus: async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+    const { status } = req.query;
+    // Verifica se o ID do cliente foi fornecido
+    if (!id) {
+      res.status(400).json({ msg: "ID do cliente é necessário" });
+      return;
+    }
+    // Verifica se o status foi fornecido
+    if (status && typeof status !== 'string') {
+      res.status(400).json({ msg: "Status deve ser uma string" });
+      return;
+    }
+    const documentos = await DocumentCustomerModel.findOne({ customer_id: id });
+    if (!documentos) {
+      res.status(404).json({ msg: "Documentos do cliente não encontrados" });
+      return;
+    }
+    // Verifica se o status já está aprovado
+if (documentos.status === 'em análise' || documentos.status === 'reprovado') {
+  res.status(400).json({ msg: "A documentação do cliente precisa estar aprovada para que o cadastro possa ser aprovado." });
+  return;
+}
+
+    try {
+      const customer = await Customer.findById(id);
+      if (!customer) {
+        res.status(404).json({ msg: "Cliente não encontrado" });
+        return;
+      }
+      // Atualiza o status do cliente para "aprovado"
+      customer.status = status ? status : customer.status ; // Se status não for fornecido, usa o status atual ou define como 'aprovado'
+      await customer.save();
+      res.status(200).json({ msg: "Status do cliente atualizado para aprovado", customer });
+    } catch (error) {
+      console.error("Erro ao aprovar status do cliente:", error);
+      res.status(500).json({ msg: "Erro no servidor ao aprovar status do cliente" });
+    } 
   }
 };
 

@@ -126,7 +126,7 @@ const customerSchema = new Schema<ICustomer>({
         trim: true,
         select: false // Não retornar a senha por padrão
     },
-    status: { type: String, default: 'em análise', enum: ['em análise', 'ativo', 'inativo'] }, // Status do cliente
+    status: { type: String, default: 'em análise', enum: ['em análise', 'aprovado', 'reprovado'] }, // Status do cliente
     type: {
         type: String,
         enum: ['individual', 'company'],

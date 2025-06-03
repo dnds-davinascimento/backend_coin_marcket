@@ -24,7 +24,7 @@ const documentCustomerSchema = new Schema<DocumentCustomer>({
   customer_id: { type: Schema.Types.ObjectId, ref: 'Customer', required: true },
   name: { type: String, required: true },
   email: { type: String },
-  status: { type: String, default: 'em análise' },
+  status: { type: String, default: 'em análise',num:['em análise', 'aprovado', 'reprovado'] },
   rg_frente: {
     url: String,
     key: String

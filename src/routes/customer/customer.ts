@@ -63,6 +63,9 @@ const router: Router = Router();
 router.route("/registerCustomer").post(
     (req: Request, res: Response) => customerControllers.createCustomer(req, res)
   );
+router.route("/approveCustomerStatus/:id").post(
+    (req: Request, res: Response) => customerControllers.approveCustomerStatus(req, res)
+  );
 router.route("/updateCustomer/:id").put(
     (req: Request, res: Response) => customerControllers.updateCustomer(req, res)
   );
