@@ -31,7 +31,7 @@ const venda_Schema = {
       }
       // Verificar se o status do cliente é "aprovado"
       if (custumer.status !== "aprovado") {
-        return res.status(403).json({ msg: "Cliente não aprovado para realizar pedidos" });
+        return res.status(403).json({ msg: "Cliente não aprovado. Envie seus documentos ou aguarde a análise do cadastro." });
       }
 
 
