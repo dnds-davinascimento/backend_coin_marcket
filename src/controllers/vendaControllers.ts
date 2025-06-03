@@ -2,7 +2,7 @@ import { Request, response, Response } from "express";
 import { Venda } from "../models/venda";
 import { Loja } from "../models/loja";
 import { Customer } from "../models/custumer"; // Importa o model Customer
-import { Cart, IProdutoCart } from "../models/cart";
+import { Cart} from "../models/cart";
 interface IHistorico {
   usuario?: string;
   data: Date;
@@ -29,6 +29,11 @@ const venda_Schema = {
       if (!custumer) {
         return res.status(404).json({ msg: "Cliente não encontrado" });
       }
+      // Verificar se o status do cliente é "aprovado"
+      if (custumer.status !== "aprovado") {
+        return res.json({ msg: "Cliente não aprovado para realizar pedidos" });
+      }
+
 
       let emitenteId = req.headers.emitenteId as string;
       if (!emitenteId) {
@@ -40,7 +45,8 @@ const venda_Schema = {
       if (!emitente) {
         return res.status(404).json({ msg: "Emitente não encontrado" });
       }
-
+      
+ 
       
 
       // Mapear endereço do cliente
