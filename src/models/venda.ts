@@ -1,5 +1,12 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
-
+interface anexos {
+  data: Date;
+  usuario: string;
+  nome: string;
+  observacao?: string;
+  url: string;
+  key?: string;
+}
 interface IEndereco {
   logradouro: string;
   numero: string;
@@ -15,10 +22,14 @@ interface IEstagioProcesso {
   tempo_do_processo?: string;
 }
 interface IFormaPagamento {
-  metodo: string;
-  pagar_no_local: boolean;
-  status?: string;
+  metodo: string; // 'Pix', 'Boleto', 'Cartão', etc
   valor: number;
+  status: 'em análise' | 'aprovado' | 'rejeitado';
+  parcelas?: {
+    numero: number;
+    valor: number;
+    data_vencimento: Date;
+  }[];
 }
 
 interface IHistorico {
@@ -69,7 +80,8 @@ interface IVenda extends Document {
   formas_de_pagamento_array: IFormaPagamento[];
   Numero_da_nota?: number;
   quantidade_de_parcelas?: number;
-  status_venda?: string;
+  status_venda: string; // Status da venda
+  anexos?: anexos[];
   descricao?: string;
   historico: IHistorico[];
   estagio_do_processo: IEstagioProcesso[];
@@ -123,10 +135,14 @@ const vendaSchema = new Schema<IVenda>(
       id: { type: String },
     },
     formas_de_pagamento_array: [{
-      metodo: { type: String },
-      pagar_no_local: { type: Boolean, required: true },
-      status: { type: String },
-      valor: { type: Number }
+      metodo: { type: String, required: true }, // 'Pix', 'Boleto', 'Cartão', etc
+      valor: { type: Number, required: true },
+      status: { type: String, enum: ['em análise', 'aprovado', 'rejeitado'], default: 'em análise' },
+      parcelas: [{
+        numero: { type: Number, required: false },
+        valor: { type: Number, required: false },
+        data_vencimento: { type: Date, required: false }
+      }]
     }],
     estagio_do_processo: [{ // Padronize para este nome
       usuario: { type: String, required: true },
@@ -134,9 +150,31 @@ const vendaSchema = new Schema<IVenda>(
       acao: { type: String, required: true },
       tempo_do_processo: { type: String, required: true },
     }],
+    anexos: [{
+      data: { type: Date, default: Date.now },
+      usuario: { type: String, required: true },
+      nome: { type: String, required: true, enum: ['comprovante_pagamento', 'nota_fiscal','comprovante_entrega', 'outro'] }, // Enum para tipos de anexos
+      observacao: { type: String, required: false },
+      url: { type: String, required: true },
+      key: { type: String, required: false }
+    }],
     Numero_da_nota: { type: Number },
     quantidade_de_parcelas: { type: Number, required: false },
-    status_venda: { type: String },
+    status_venda: {
+      type: String,
+      default: 'em análise', // Status inicial
+      enum: [
+        'em análise', // Status inicial        // Cliente fez o pedido
+        'aprovado_para_pagamento', // Equipe aprovou o pedido
+        'aguardando_pagamento',    // Aguardando cliente pagar e enviar comprovante
+        'pagamento_em_análise',    // Equipe avaliando o pagamento
+        'pagamento_aprovado',      // Pagamento aprovado
+        'pedido_separado',         // Equipe separou os itens
+        'pedido_entregue',         // Pedido foi entregue
+        'recebido_pelo_cliente',    // Cliente confirmou recebimento
+        'cancelado', // Pedido cancelado
+      ]
+    },
     descricao: { type: String },
     historico: [{
       usuario: { type: String, required: false },

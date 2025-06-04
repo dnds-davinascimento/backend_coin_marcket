@@ -8,6 +8,14 @@ router.route("/createOrder").post(
 
     (req: Request, res: Response) => vendaControllers.createOrder(req, res)
   );
+router.route("/advanceProcess/:id").post(
+
+    (req: Request, res: Response) => vendaControllers.advanceProcess(req, res)
+  );
+router.route("/addPaymentFor/:id").post(
+
+    (req: Request, res: Response) => vendaControllers.addPaymentFor(req, res)
+  );
 router.route("/getByOrderConsumidor").get(
 
     (req: Request, res: Response) => vendaControllers.getByConsumidor(req, res)
