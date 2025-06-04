@@ -123,7 +123,7 @@ const venda_Schema = {
       const vendaSalva = await novaVenda.save();
 
 
-      const cart = await Cart.findOne({ 'consumidor.id': custumerId });
+      const cart = await Cart.findOne({ 'consumidor.id': custumerId, 'status_Cart': "aberto" });
 
       if (cart) {
         /*         cart.produtos = [];
