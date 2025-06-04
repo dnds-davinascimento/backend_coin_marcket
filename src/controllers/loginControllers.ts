@@ -51,6 +51,7 @@ const loginController = {
         name: user.name,
         thumbnail_url: existingCustomer?.thumbnail?.url,
         email: user.email,
+        statusCustomer: existingCustomer?.status ,
         user_store_id: user_store_id,
         permissions: existingUser?.permissions,
         isAdmin: existingAdmin ? true : false,

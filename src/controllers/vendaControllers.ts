@@ -161,7 +161,7 @@ const venda_Schema = {
 
 
 
-      const Order = await Venda.find({ "consumidor.id": custumer_id });
+      const Order = await Venda.find({ "consumidor.id": custumer_id }).sort({ createdAt: -1 });
 
 
       return res.status(200).json(Order);
@@ -180,7 +180,7 @@ const venda_Schema = {
 
 
 
-      const Order = await Venda.find({ "emitente._id": emitente_id });
+      const Order = await Venda.find({ "emitente._id": emitente_id }).sort({ createdAt: -1 });
 
 
       return res.status(200).json(Order);
@@ -280,11 +280,23 @@ const venda_Schema = {
           return res.status(403).json({ msg: "Aguardando ação do cliente para avançar este estágio." });
         }
       }
-      /* quando status atual for pagamento em analize e porcimo for pagamento aprovado mudar status do pagamento para aprovado */
-      if (atual === "pagamento_em_análise" && proximo === "pagamento_aprovado") {
+      /* quando status atual for pagamento em analize e porximo for aprovado_para_pagamento mudar status do pagamento para aprovado */
+      if (atual === "pagamento_em_análise" && proximo === "aprovado_para_pagamento") {
         venda.formas_de_pagamento_array.forEach((pagamento: any) => {
           pagamento.status = "aprovado"; // Atualiza o status do pagamento para aprovado
         });
+      }
+      /* quando o status atual for aprovado_para_pagamento  e o proximo pagamento_em_análise as formas de pagamento tem que esta preenchida e o valor totas tem que bater com valor da venda
+        */
+      if (atual === "aprovado_para_pagamento" && proximo === "pagamento_em_análise") {
+        if (!venda.formas_de_pagamento_array || venda.formas_de_pagamento_array.length === 0) {
+          return res.status(400).json({ msg: "Formas de pagamento não informadas. Por favor, adicione as formas de pagamento antes de avançar." });
+        }
+
+        const totalPagamento = venda.formas_de_pagamento_array.reduce((total: number, pagamento: any) => total + pagamento.valor, 0);
+        if (totalPagamento < venda.valorTotal) {
+          return res.status(400).json({ msg: "O valor total das formas de pagamento não corresponde ao valor da venda." });
+        }
       }
 
       // Avançar status

@@ -66,7 +66,7 @@ const cartController = {
       // Busca os carrinhos do consumidor
       const carrinhos = await Cart.findOne({ 
         "consumidor.id": custumer_id
-        , "status_Cart": { $ne: "finalizado" }
+        , "status_Cart": { $ne: "finalizado" } // Exclui carrinhos finalizados
         
       });
       
@@ -126,7 +126,7 @@ const cartController = {
       // Busca carrinhos ativos do cliente (status diferente de finalizado)
       let carrinhoAtivo = await Cart.findOne({ 
         "consumidor.id": custumer_id
-        , "status_Cart": { $ne: "finalizado" }
+        , "status_Cart": "aberto"
         
       });
 
