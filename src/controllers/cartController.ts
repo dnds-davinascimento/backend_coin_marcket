@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import mongoose from "mongoose";
 import { Cart, IProdutoCart } from "../models/cart";
 import { Customer } from "../models/custumer";
+import { Produto } from "../models/product";
 const cartController = {
   getById: async (req: Request, res: Response) => {
     try {
@@ -80,141 +81,149 @@ const cartController = {
     }
   },
 
-  addProduto: async (req: Request, res: Response) => {
-    try {
-      const custumer_id = req.headers['id'] as string | undefined;
-      const produtoBody = req.body; // Produto recebido do frontend
-      
+ addProduto: async (req: Request, res: Response) => {
+  try {
+    const custumer_id = req.headers['id'] as string | undefined;
+    const produtoBody = req.body;
 
-      // Verifica se o ID do cliente foi fornecido
-      if (!custumer_id) {
-        return res.status(400).json({
-          success: false,
-          message: "ID do cliente é obrigatório",
-        });
-      }
-
-      // CORREÇÃO: Usar findById para buscar diretamente pelo ID
-      const consumidor = await Customer.findById(custumer_id);
-      
-     
-      
-      if (!consumidor) {
-        return res.status(404).json({ 
-          success: false,
-          msg: "Cliente não encontrado" 
-        });
-      }
-
-      // Prepara o objeto do produto para o carrinho
-      const produtoCart: IProdutoCart = {
-        _id: produtoBody.id,
-        nome: produtoBody.title,
-        quantidade: 1, // Sempre adiciona 1 unidade por clique
-        un: 'un', // Unidade padrão
-        preco_de_Venda: produtoBody.price,
-        preco_de_custo: 0, // Pode ajustar conforme sua lógica
-        desconto: 0, // Calcula o desconto
-        precoTotal: produtoBody.price , // Usa o preço com desconto
-        estoque: produtoBody.stock,
-        status: 'pendente',
-        codigo_interno: '', // Pode ajustar conforme sua lógica
-        categoria: produtoBody.category,
-        imgs:produtoBody.imgs
-      };
-
-      // Busca carrinhos ativos do cliente (status diferente de finalizado)
-      let carrinhoAtivo = await Cart.findOne({ 
-        "consumidor.id": custumer_id
-        , "status_Cart": "aberto"
-        
-      });
-
-      if (!carrinhoAtivo) {
-        // Cria um novo carrinho se não existir um ativo
-        const novoCarrinho = new Cart({
-          consumidor: {
-            id: consumidor._id.toString(),
-            cpf: consumidor.cpf_cnpj,
-            nome: consumidor.name,
-            email: consumidor.email || '',
-            contato: consumidor.phone || '',
-            endereco: consumidor.endereco || []
-          },
-          produtos: [produtoCart],
-          ItensTotal: 1, // 1 item inicial
-          valorTotal: produtoBody.price, // Total inicial
-          
-          status_Cart: 'aberto',
-          historico: [{
-            acao: `Carrinho criado com produto ${produtoBody.title}`,
-            data: new Date()
-          }]
-        });
-
-        const carrinhoSalvo = await novoCarrinho.save();
-        
-        return res.status(201).json({
-          success: true,
-          message: "Novo carrinho criado e produto adicionado",
-          data: carrinhoSalvo
-        });
-      } else {
-        // Verifica se o produto já existe no carrinho
-        const produtoExistenteIndex = carrinhoAtivo.produtos.findIndex(
-          p => p._id === produtoBody.id
-        );
-
-        if (produtoExistenteIndex >= 0) {
-          // Incrementa a quantidade em 1 se o produto já existir
-          carrinhoAtivo.produtos[produtoExistenteIndex].quantidade += 1;
-          // Recalcula o preço total do produto
-          const precoUnitario = carrinhoAtivo.produtos[produtoExistenteIndex].preco_de_Venda;
-          
-          carrinhoAtivo.produtos[produtoExistenteIndex].precoTotal =  (precoUnitario * carrinhoAtivo.produtos[produtoExistenteIndex].quantidade);
-        } else {
-          // Adiciona novo produto ao carrinho existente
-          carrinhoAtivo.produtos.push(produtoCart);
-        }
-
-        // Atualiza totais do carrinho
-        carrinhoAtivo.ItensTotal = carrinhoAtivo.produtos.reduce(
-          (total, prod) => total + prod.quantidade, 0
-        );
-        
-        carrinhoAtivo.valorTotal = carrinhoAtivo.produtos.reduce(
-          (total, prod) => total + prod.precoTotal, 0
-        );
-        
-     
-
-        // Adiciona registro no histórico
-/*         carrinhoAtivo.historico.push({
-          acao: produtoExistenteIndex >= 0 
-            ? `Quantidade do produto ${produtoBody.title} incrementada (+1)` 
-            : `Produto ${produtoBody.title} adicionado ao carrinho`,
-          data: new Date()
-        }); */
-
-        const carrinhoAtualizado = await carrinhoAtivo.save();
-        
-        return res.status(200).json({
-          success: true,
-          message: produtoExistenteIndex >= 0 
-            ? "Quantidade do produto incrementada em 1 unidade" 
-            : "Produto adicionado ao carrinho existente",
-          data: carrinhoAtualizado
-        });
-      }
-    } catch (error) {
-      console.error("Erro ao adicionar produto:", error);
-      return res.status(500).json({
+    if (!custumer_id) {
+      return res.status(400).json({
         success: false,
-        message: "Erro interno ao adicionar produto ao carrinho",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
+        message: "ID do cliente é obrigatório",
       });
     }
-  },
+
+    const consumidor = await Customer.findById(custumer_id);
+    if (!consumidor) {
+      return res.status(404).json({
+        success: false,
+        msg: "Cliente não encontrado"
+      });
+    }
+
+    // Busca o produto direto no banco pra pegar estoque atualizado
+    const produtoDb = await Produto.findById(produtoBody.id);
+    if (!produtoDb) {
+      return res.status(404).json({
+        success: false,
+        msg: "Produto não encontrado"
+      });
+    }
+
+    const estoqueAtual = produtoDb.estoque ?? 0;
+
+    const produtoCart: IProdutoCart = {
+      _id: produtoBody.id,
+      nome: produtoDb.nome,
+      quantidade: 1,
+      un: 'un',
+      preco_de_Venda: produtoBody.price,
+      preco_de_custo: 0,
+      desconto: 0,
+      precoTotal: produtoBody.price , // Usa o preço com desconto
+      estoque: produtoDb.estoque ?? 0,
+      status: 'pendente',
+      codigo_interno: '',
+      categoria: produtoBody.category,
+      imgs: produtoDb.imgs
+    };
+
+    let carrinhoAtivo = await Cart.findOne({
+      "consumidor.id": custumer_id,
+      "status_Cart": "aberto"
+    });
+
+    if (!carrinhoAtivo) {
+      // Verifica estoque antes de criar novo carrinho
+      if (estoqueAtual < 1) {
+        return res.status(400).json({
+          success: false,
+          message: "Estoque insuficiente"
+        });
+      }
+
+      const novoCarrinho = new Cart({
+        consumidor: {
+          id: consumidor._id.toString(),
+          cpf: consumidor.cpf_cnpj,
+          nome: consumidor.name,
+          email: consumidor.email || '',
+          contato: consumidor.phone || '',
+          endereco: consumidor.endereco || []
+        },
+        produtos: [produtoCart],
+        ItensTotal: 1,
+        valorTotal: produtoBody.price, // Total inicial
+        status_Cart: 'aberto',
+        historico: [{
+           acao: `Carrinho criado com produto ${produtoBody.title}`,
+          data: new Date()
+        }]
+      });
+
+      const carrinhoSalvo = await novoCarrinho.save();
+
+      return res.status(201).json({
+        success: true,
+        message: "Novo carrinho criado e produto adicionado",
+        data: carrinhoSalvo
+      });
+    } else {
+      const produtoExistenteIndex = carrinhoAtivo.produtos.findIndex(
+         p => p._id === produtoBody.id
+      );
+
+      if (produtoExistenteIndex >= 0) {
+        const quantidadeAtual = carrinhoAtivo.produtos[produtoExistenteIndex].quantidade;
+        if (quantidadeAtual + 1 > estoqueAtual) {
+          return res.status(400).json({
+            success: false,
+            message: "Quantidade excede o estoque disponível"
+          });
+        }
+
+        carrinhoAtivo.produtos[produtoExistenteIndex].quantidade += 1;
+        carrinhoAtivo.produtos[produtoExistenteIndex].precoTotal =
+          carrinhoAtivo.produtos[produtoExistenteIndex].quantidade *
+          carrinhoAtivo.produtos[produtoExistenteIndex].preco_de_Venda;
+
+      } else {
+        if (estoqueAtual < 1) {
+          return res.status(400).json({
+            success: false,
+            message: "Estoque insuficiente"
+          });
+        }
+
+        carrinhoAtivo.produtos.push(produtoCart);
+      }
+
+      carrinhoAtivo.ItensTotal = carrinhoAtivo.produtos.reduce(
+        (total, prod) => total + prod.quantidade, 0
+      );
+
+      carrinhoAtivo.valorTotal = carrinhoAtivo.produtos.reduce(
+        (total, prod) => total + prod.precoTotal, 0
+      );
+
+      await carrinhoAtivo.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Produto adicionado ao carrinho existente",
+        data: carrinhoAtivo
+      });
+    }
+
+  } catch (error) {
+    console.error("Erro ao adicionar produto:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Erro ao adicionar produto ao carrinho"
+    });
+  }
+},
+
 
   RemoveProductFromCart: async (req: Request, res: Response) => {
     try {
