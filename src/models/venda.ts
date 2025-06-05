@@ -56,6 +56,12 @@ interface IProdutoVenda {
   qt_devolucao: number;
   produto_servico: boolean;
 }
+/* interface de obsevações */
+interface IObservacao {
+  usuario: string;
+  data: Date;
+  observacao?: string;
+}
 
 interface IVenda extends Document {
   emitente: {
@@ -85,6 +91,7 @@ interface IVenda extends Document {
   descricao?: string;
   historico: IHistorico[];
   estagio_do_processo: IEstagioProcesso[];
+  observacoes?: IObservacao[];
   ItensTotal: number;
   produtos: IProdutoVenda[];
   valorTotal: number;
@@ -157,6 +164,11 @@ const vendaSchema = new Schema<IVenda>(
       observacao: { type: String, required: false },
       url: { type: String, required: true },
       key: { type: String, required: false }
+    }],
+    observacoes: [{
+      usuario: { type: String, required: true },
+      data: { type: Date, default: Date.now },
+      observacao: { type: String, required: false }
     }],
     Numero_da_nota: { type: Number },
     quantidade_de_parcelas: { type: Number, required: false },

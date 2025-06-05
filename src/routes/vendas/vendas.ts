@@ -16,6 +16,14 @@ router.route("/addPaymentFor/:id").post(
 
     (req: Request, res: Response) => vendaControllers.addPaymentFor(req, res)
   );
+router.route("/attachDocument/:id").post(
+
+    (req: Request, res: Response) => vendaControllers.attachDocument(req, res)
+  );
+router.route("/removeAttach/:id").post(
+
+    (req: Request, res: Response) => vendaControllers.removeAttach(req, res)
+  );
 router.route("/getByOrderConsumidor").get(
 
     (req: Request, res: Response) => vendaControllers.getByConsumidor(req, res)

@@ -147,7 +147,7 @@ const venda_Schema = {
       });
 
     } catch (error) {
-     
+
       return res.status(500).json({
         success: false,
         msg: "Erro ao processar o pedido",
@@ -267,7 +267,7 @@ const venda_Schema = {
       }
 
       if (isEquipe) {
-       
+
         const permitido = (
           (atual === "em análise" && proximo === "aprovado_para_pagamento") ||
           (atual === "pagamento_em_análise" && proximo === "pagamento_aprovado") ||
@@ -322,7 +322,7 @@ const venda_Schema = {
       });
 
     } catch (error) {
-     
+
       return res.status(500).json({
         success: false,
         msg: "Erro ao avançar o processo",
@@ -335,7 +335,7 @@ const venda_Schema = {
       const vendaId = req.params.id;
       const id_usuario = req.headers.id as string;
       const formas_de_pagamento_array = req.body.formas_de_pagamento_array;
-     
+
 
       if (!vendaId || !id_usuario) {
         return res.status(400).json({ msg: "ID da venda e do usuário são necessários" });
@@ -390,14 +390,130 @@ const venda_Schema = {
       });
 
     } catch (error) {
-     
+
       return res.status(500).json({
         success: false,
         msg: "Erro ao enviar pagamento para análise",
         error: error instanceof Error ? error.message : "Erro desconhecido"
       });
     }
+  },
+  attachDocument: async (req: Request, res: Response) => {
+    try {
+      const vendaId = req.params.id;
+      const id_usuario = req.headers.id as string;
+      const { tipo, observacao, url, key } = req.body;
+
+
+      if (!vendaId || !id_usuario) {
+        return res.status(400).json({ msg: "ID da venda e do usuário são necessários" });
+      }
+
+      if (!url) {
+        return res.status(400).json({ msg: "URL do anexo são obrigatórios" });
+      }
+
+      const venda = await Venda.findById(vendaId);
+      if (!venda) {
+        return res.status(404).json({ msg: "Venda não encontrada" });
+      }
+
+      const usuario = await User.findById(id_usuario) || await Admin.findById(id_usuario) || await Customer.findById(id_usuario);
+      if (!usuario) {
+        return res.status(404).json({ msg: "Usuário não encontrado" });
+      }
+
+      if (venda.status_venda === "em análise") {
+        return res.status(400).json({
+          msg: "Não é possível anexar o comprovante de pagamento enquanto a venda estiver em análise."
+        });
+      }
+
+
+
+
+      // Adicionar o anexo
+      const anexo = {
+        data: new Date(),
+        usuario: usuario.name || "Sistema",
+        nome: tipo, // Tipo do anexo (comprovante_pagamento, nota_fiscal, comprovante_entrega, outro)
+        observacao,
+        url,
+        key
+      };
+
+      if (!venda.anexos) {
+        venda.anexos = [];
+      }
+      venda.anexos.push(anexo);
+      venda.historico.push({
+        usuario: usuario.name || "Sistema",
+        data: new Date(),
+        acao: `Anexo adicionado: ${tipo}`
+      });
+
+      const vendaAtualizada = await venda.save();
+
+      return res.status(200).json({
+        success: true,
+        msg: "Anexo adicionado com sucesso",
+        venda: vendaAtualizada
+      });
+    } catch (error) {
+
+    }
+  },
+  /* função para remover anexo */
+
+  removeAttach: async (req: Request, res: Response) => {
+    try {
+      const vendaId = req.params.id;
+      const id_usuario = req.headers.id as string;
+      const { key } = req.body;
+      console.log(req.body)
+
+      if (!vendaId || !id_usuario || !key) {
+        return res.status(400).json({ msg: "ID da venda, do usuário e key do anexo são obrigatórios" });
+      }
+
+      const venda = await Venda.findById(vendaId);
+      if (!venda) {
+        return res.status(404).json({ msg: "Venda não encontrada" });
+      }
+
+      const usuario = await User.findById(id_usuario) || await Admin.findById(id_usuario) || await Customer.findById(id_usuario);
+      if (!usuario) {
+        return res.status(404).json({ msg: "Usuário não encontrado" });
+      }
+
+      // Filtra fora o anexo com a key recebida
+      const anexoRemovido = venda.anexos?.find((a: any) => a.key === key);
+      if (!anexoRemovido) {
+        return res.status(404).json({ msg: "Anexo não encontrado" });
+      }
+
+      venda.anexos = venda.anexos?.filter((a: any) => a.key !== key);
+
+      venda.historico.push({
+        usuario: usuario.name || "Sistema",
+        data: new Date(),
+        acao: `Anexo removido: ${anexoRemovido.nome || "sem nome"}`
+      });
+
+      const vendaAtualizada = await venda.save();
+
+      return res.status(200).json({
+        success: true,
+        msg: "Anexo removido do Mongo com sucesso",
+        venda: vendaAtualizada
+      });
+    } catch (error) {
+      console.error("Erro ao remover anexo do Mongo:", error);
+      return res.status(500).json({ msg: `Erro interno ao remover anexo:${error}` });
+    }
   }
+
+
 
 };
 
