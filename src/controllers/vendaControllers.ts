@@ -297,7 +297,14 @@ const venda_Schema = {
         if (totalPagamento < venda.valorTotal) {
           return res.status(400).json({ msg: "O valor total das formas de pagamento não corresponde ao valor da venda." });
         }
+
       }
+      if (atual === "pagamento_em_análise" && proximo === "pagamento_aprovado") {
+        venda.formas_de_pagamento_array.forEach((pagamento: any) => {
+          pagamento.status = "aprovado";
+        });
+      }
+
 
       // Avançar status
       venda.status_venda = proximo;
