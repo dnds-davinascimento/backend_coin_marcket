@@ -71,16 +71,15 @@ const userController = {
   get_user_store: async (req: Request, res: Response): Promise<void> => {
     try {
       const id_loja = req.headers.user_store_id as string;
-      const user_store_id = req.headers.user_store_idd as string;
-      const id_store = user_store_id ? user_store_id : id_loja;
+      const user_store_id = req.headers.id as string;
 
-      if (!id_store) {
+      if (!id_loja) {
         res.status(400).json({ msg: "ID da loja não fornecido no cabeçalho." });
         return;
       }
 
       // Busca a loja no banco de dados pelo ID do usuário
-      const store = await User.find({ user_store_id: id_store }); // Supondo que você tenha um modelo de `Store`
+      const store = await User.find({ user_store_id: id_loja }); // Supondo que você tenha um modelo de `Store`
 
       if (!store) {
         res.status(404).json({ msg: "Loja não encontrada." });

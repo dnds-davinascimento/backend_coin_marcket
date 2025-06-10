@@ -82,7 +82,7 @@ const venda_Schema = {
         acao: "Pedido recebido - Em análise",
         tempo_do_processo: "0 minutos"
       };
-
+      const vendedor = req.body.vendedor;
       // Criar objeto da venda
       const vendaData = {
         emitente: {
@@ -100,6 +100,7 @@ const venda_Schema = {
           contato: custumer.phone,
           endereco: enderecoConsumidor
         },
+        vendedor: vendedor || null, 
         formas_de_pagamento_array: [],
         Numero_da_nota: undefined, // Será gerado posteriormente
         status_venda: "em análise", // Status inicial

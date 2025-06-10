@@ -440,25 +440,25 @@ const produto_Schema = {
       query.nome = { $regex: new RegExp(nome as string, "i") };
     }
 
- if (categoria) {
-  if (typeof categoria === 'string') {
-    const subcategoria = await Categoria.findById(categoria);
-    
-    // Ajuste: Verifique se subcategoria possui um campo que identifica subcategoria, por exemplo, 'parient' ou similar
-    if (subcategoria && (subcategoria as any).parient) {
-      query["categoria.subcategorias.id"] = new Types.ObjectId(categoria); // Subcategoria
-    } else {
-      query["categoria.id"] = new Types.ObjectId(categoria); // Categoria normal (id como string)
-    }
+    if (categoria) {
+      if (typeof categoria === 'string') {
+        const subcategoria = await Categoria.findById(categoria);
 
-  } else if (typeof categoria === 'object' && categoria) {
-    query["categoria"] = new Types.ObjectId(
-      typeof categoria === "string" ? categoria : Array.isArray(categoria) && typeof categoria[0] === "string"
-        ? categoria[0]
-        : ""
-    ); // Objeto com id
-  }
-}
+        // Ajuste: Verifique se subcategoria possui um campo que identifica subcategoria, por exemplo, 'parient' ou similar
+        if (subcategoria && (subcategoria as any).parient) {
+          query["categoria.subcategorias.id"] = new Types.ObjectId(categoria); // Subcategoria
+        } else {
+          query["categoria.id"] = new Types.ObjectId(categoria); // Categoria normal (id como string)
+        }
+
+      } else if (typeof categoria === 'object' && categoria) {
+        query["categoria"] = new Types.ObjectId(
+          typeof categoria === "string" ? categoria : Array.isArray(categoria) && typeof categoria[0] === "string"
+            ? categoria[0]
+            : ""
+        ); // Objeto com id
+      }
+    }
 
 
     if (codigo_interno) {
@@ -630,7 +630,7 @@ const produto_Schema = {
       // Obter as credenciais do usuário
       const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
 
-  const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
+      const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
 
 
       // Obter o token de autenticação para Idealsoft
@@ -689,7 +689,7 @@ const produto_Schema = {
             `Página ${paginaIdeal} de produtos da Shop9: ${produtosIdeal.length}`
           );
         }
-       
+
       }
 
       console.log(`Total de produtos pegos na Shop9: ${produtosIdeal.length}`);
@@ -743,28 +743,28 @@ const produto_Schema = {
       }
 
 
-            // Enviar email após a sincronização
-            const emails = [];
-            if (admin.paymentAlert === true) {
-              emails.push(admin.email);
-            }
-            // Busca outros usuários com `paymentAlert: true` que pertencem à loja do admin
-            const users = admin ? await User.find({ user_store_id: admin._id, paymentAlert: true }) : [];
-            // Adiciona os emails dos usuários encontrados
-            emails.push(...users.map(user => user.email));
-            // Enviar e-mail com o erro
+      // Enviar email após a sincronização
+      const emails = [];
+      if (admin.paymentAlert === true) {
+        emails.push(admin.email);
+      }
+      // Busca outros usuários com `paymentAlert: true` que pertencem à loja do admin
+      const users = admin ? await User.find({ user_store_id: admin._id, paymentAlert: true }) : [];
+      // Adiciona os emails dos usuários encontrados
+      emails.push(...users.map(user => user.email));
+      // Enviar e-mail com o erro
 
 
       // Calcular o tempo total de sincronização
-            const fimSincronizacao = Date.now();
-            const tempoTotal = (fimSincronizacao - inicioSincronizacao) / 1000; // em segundos
-            console.log(`Tempo total de sincronização: ${tempoTotal} segundos`);
-            await sendEmail(
-              emails,
-              produtosIdeal.length,
-              produtosCadastrados,
-              tempoTotal
-            );
+      const fimSincronizacao = Date.now();
+      const tempoTotal = (fimSincronizacao - inicioSincronizacao) / 1000; // em segundos
+      console.log(`Tempo total de sincronização: ${tempoTotal} segundos`);
+      await sendEmail(
+        emails,
+        produtosIdeal.length,
+        produtosCadastrados,
+        tempoTotal
+      );
 
 
     } catch (error) {
@@ -783,7 +783,7 @@ const produto_Schema = {
 
       // Obter credenciais usando o serviço
       const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
-  const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
+      const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
       // 1. Obtenha o token de autenticação
       const token = await authService.getAuthToken(serie, codFilial, api);
 
@@ -1005,13 +1005,8 @@ const produto_Schema = {
     try {
       const id_loja = req.headers.user_store_id as string;
       const user_store_id = req.headers.id as string;
-
-
-
-
-
-        const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
-  const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
+      const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
+      const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
       // Obter o token de autenticação para Idealsoft
       const token = await authService.getAuthToken(serie, codFilial, api);
       const method = "get";
@@ -1028,89 +1023,89 @@ const produto_Schema = {
       const products = req.body; // O corpo da requisição deve conter o array de produtos
 
       const results = [];
-    
-        try {
-          // Verificar se o Produto já existe no MongoDB
-          const existingProduct = await Produto.findOne({
-            codigo_ideal: products.codigo,
+
+      try {
+        // Verificar se o Produto já existe no MongoDB
+        const existingProduct = await Produto.findOne({
+          codigo_ideal: products.codigo,
+        });
+
+        if (!existingProduct) {
+
+          results.push({
+            error: `Produto com código ${products.codigo} não encontrado no MongoDB.`,
           });
+          return; // Pular para o próximo produto se não existir
+        }
 
-          if (!existingProduct) {
-
-            results.push({
-              error: `Produto com código ${products.codigo} não encontrado no MongoDB.`,
-            });
-            return; // Pular para o próximo produto se não existir
+        // Obtendo a posição das imagens dos produtos da Idealsoft
+        const { data: imgProductposition } = await axios.get<ApiResponse>(
+          `${url_ideal}/fotos/${existingProduct.codigo_ideal}`,
+          {
+            headers: headersIdeal,
           }
+        );
 
-          // Obtendo a posição das imagens dos produtos da Idealsoft
-          const { data: imgProductposition } = await axios.get<ApiResponse>(
-            `${url_ideal}/fotos/${existingProduct.codigo_ideal}`,
+        // Verificar se o produto tem fotos
+        if (imgProductposition.dados.fotos.length === 0) {
+
+          results.push({
+            error: `Produto com código ${existingProduct.codigo_ideal} não possui fotos.`,
+          });
+          return; // Pular para o próximo produto se não houver fotos
+        }
+
+        const productId = existingProduct.codigo_ideal; // Obtendo o ID do produto criado
+
+        if (!productId) {
+
+          results.push({
+            error: `Produto com código ${existingProduct.codigo_ideal} não possui ID.`,
+          });
+          return; // Pular para o próximo produto se não houver ID
+        }
+
+        // Loop para buscar cada foto com base na posição
+        for (const foto of imgProductposition.dados.fotos) {
+          // Obter a imagem do produto da Idealsoft em base64 para cada posição
+          const { data: imgProduct } = await axios.get<ArrayBuffer>(
+            `${url_ideal}/fotos/${existingProduct.codigo_ideal}/${foto.posicao}`,
             {
               headers: headersIdeal,
+              responseType: "arraybuffer", // Garantir que estamos recebendo um array de bytes (binário)
             }
           );
 
-          // Verificar se o produto tem fotos
-          if (imgProductposition.dados.fotos.length === 0) {
 
-            results.push({
-              error: `Produto com código ${existingProduct.codigo_ideal} não possui fotos.`,
-            });
-            return; // Pular para o próximo produto se não houver fotos
-          }
-
-          const productId = existingProduct.codigo_ideal; // Obtendo o ID do produto criado
-
-          if (!productId) {
-
-            results.push({
-              error: `Produto com código ${existingProduct.codigo_ideal} não possui ID.`,
-            });
-            return; // Pular para o próximo produto se não houver ID
-          }
-
-          // Loop para buscar cada foto com base na posição
-          for (const foto of imgProductposition.dados.fotos) {
-            // Obter a imagem do produto da Idealsoft em base64 para cada posição
-            const { data: imgProduct } = await axios.get<ArrayBuffer>(
-              `${url_ideal}/fotos/${existingProduct.codigo_ideal}/${foto.posicao}`,
-              {
-                headers: headersIdeal,
-                responseType: "arraybuffer", // Garantir que estamos recebendo um array de bytes (binário)
-              }
-            );
-            
-
-            // Converte a resposta binária para base64
-            const base64Img = Buffer.from(new Uint8Array(imgProduct)).toString(
-              "base64"
-            );
-            // Monta a URL da imagem
-            const { url, key } = await uploadToS3(base64Img, `products`, `img-${foto.posicao}`);
-
-            // Adiciona a imagem ao produto existente
-            if (!Array.isArray(existingProduct.imgs)) {
-              existingProduct.imgs = [{ url: "", key: "" }];
-            }
-            existingProduct.imgs.push({ url, key });
-            await existingProduct.save();
-
-
-          }
-
-          results.push(
-            `Imagens do produto ${existingProduct.codigo_ideal} foram adicionadas com sucesso.`
+          // Converte a resposta binária para base64
+          const base64Img = Buffer.from(new Uint8Array(imgProduct)).toString(
+            "base64"
           );
-        } catch (error: any) {
-          console.log(
-            `Erro ao processar o produto ${products.codigo}: ${error.message}`
-          );
-          results.push({
-            error: `Erro ao adicionar imagem para o produto ${products.codigo}: ${error.message}`,
-          });
+          // Monta a URL da imagem
+          const { url, key } = await uploadToS3(base64Img, `products`, `img-${foto.posicao}`);
+
+          // Adiciona a imagem ao produto existente
+          if (!Array.isArray(existingProduct.imgs)) {
+            existingProduct.imgs = [{ url: "", key: "" }];
+          }
+          existingProduct.imgs.push({ url, key });
+          await existingProduct.save();
+
+
         }
-    
+
+        results.push(
+          `Imagens do produto ${existingProduct.codigo_ideal} foram adicionadas com sucesso.`
+        );
+      } catch (error: any) {
+        console.log(
+          `Erro ao processar o produto ${products.codigo}: ${error.message}`
+        );
+        results.push({
+          error: `Erro ao adicionar imagem para o produto ${products.codigo}: ${error.message}`,
+        });
+      }
+
 
       res.status(200).json(results);
     } catch (error) {
@@ -1120,7 +1115,7 @@ const produto_Schema = {
         .json({ msg: "Erro no servidor, tente novamente mais tarde" });
     }
   },
-   sinc_metadados_IA: async (
+  sinc_metadados_IA: async (
     req: Request,
     res: Response
   ): Promise<void> => {
@@ -1132,7 +1127,7 @@ const produto_Schema = {
 
       // Obter credenciais usando o serviço
       const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
-  const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
+      const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
       // 1. Primeiro, obtenha o token de autenticação
       const token = await authService.getAuthToken(serie, codFilial, api);
 
@@ -1154,95 +1149,95 @@ const produto_Schema = {
 
       const results = []; // Array para armazenar os resultados dos produtos enviados
 
- 
-        try {
-          // Verificar se o Produto já existe no MongoDB
-           const existingProduct = await Produto.findOne({
+
+      try {
+        // Verificar se o Produto já existe no MongoDB
+        const existingProduct = await Produto.findOne({
           codigo_ideal: product.codigo,
         });
 
-          if (!existingProduct) {
-            console.log(`Produto ${product.id} não encontrado no MongoDB`);
-            results.push({
-              error: `Produto com ID ${product.id} não encontrado no MongoDB.`,
-            });
-            return; // Adicionado para evitar uso de existingProduct nulo
-          }
-          // 2. Fazer a chamada para pegar o objeto produto com as URLs
-          const { data: produtoDetalhes } = await axios.get<{
-            dados: ProductDetalhesResponse;
-          }>(`${url_ideal}/produtos/detalhes/${existingProduct.codigo_ideal}`, {
-            headers,
+        if (!existingProduct) {
+          console.log(`Produto ${product.id} não encontrado no MongoDB`);
+          results.push({
+            error: `Produto com ID ${product.id} não encontrado no MongoDB.`,
+          });
+          return; // Adicionado para evitar uso de existingProduct nulo
+        }
+        // 2. Fazer a chamada para pegar o objeto produto com as URLs
+        const { data: produtoDetalhes } = await axios.get<{
+          dados: ProductDetalhesResponse;
+        }>(`${url_ideal}/produtos/detalhes/${existingProduct.codigo_ideal}`, {
+          headers,
+        });
+
+        if (!produtoDetalhes.dados.observacao1) {
+          results.push({
+            msg: `Insira uma descrição no produto:${existingProduct?.codigo_ideal} dentro da shop9`,
           });
 
-          if (!produtoDetalhes.dados.observacao1) {
-            results.push({
-              msg: `Insira uma descrição no produto:${existingProduct?.codigo_ideal} dentro da shop9`,
-            });
-            
-          }
-          
-          // Envia a requisição para a Nuvemshop para deletar o produto
-          const { data: iaagente } = await axios.post<responseIA>(
-            `https://n8n.croi.tech/webhook/9e21a663-8494-432b-841c-8c69603886c4`,
-            {
-              nome_produto: String(produtoDetalhes.dados.nome),
-              "descricaotecnica ": String(produtoDetalhes.dados.observacao1),
+        }
+
+        // Envia a requisição para a Nuvemshop para deletar o produto
+        const { data: iaagente } = await axios.post<responseIA>(
+          `https://n8n.croi.tech/webhook/9e21a663-8494-432b-841c-8c69603886c4`,
+          {
+            nome_produto: String(produtoDetalhes.dados.nome),
+            "descricaotecnica ": String(produtoDetalhes.dados.observacao1),
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
             },
-            {
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          if (!iaagente) {
-            res.status(500).json({ msg: "deuerrado" });
           }
+        );
 
-          // Função para extrair dados entre as tags
-          function extractBetweenTags(text: string, tag: string) {
-            const regex = new RegExp(`<${tag}>(.*?)<\/${tag}>`, "s"); // 's' para pegar múltiplas linhas
-            const match = text.match(regex);
-            return match ? match[1].trim() : null;
-          }
+        if (!iaagente) {
+          res.status(500).json({ msg: "deuerrado" });
+        }
 
-          // Acessando o campo 'output' do array e separando os elementos
-          const output = iaagente.output; // Pegando o primeiro item do array
-          const seoTitle = extractBetweenTags(output, "seo_title");
-          const seoDescription = extractBetweenTags(output, "seo_description");
-          const productCopy = extractBetweenTags(output, "product_copy");
-          const productSpecs = extractBetweenTags(output, "product_specs");
-          
+        // Função para extrair dados entre as tags
+        function extractBetweenTags(text: string, tag: string) {
+          const regex = new RegExp(`<${tag}>(.*?)<\/${tag}>`, "s"); // 's' para pegar múltiplas linhas
+          const match = text.match(regex);
+          return match ? match[1].trim() : null;
+        }
 
-          const productData =     {
-              description: `
+        // Acessando o campo 'output' do array e separando os elementos
+        const output = iaagente.output; // Pegando o primeiro item do array
+        const seoTitle = extractBetweenTags(output, "seo_title");
+        const seoDescription = extractBetweenTags(output, "seo_description");
+        const productCopy = extractBetweenTags(output, "product_copy");
+        const productSpecs = extractBetweenTags(output, "product_specs");
+
+
+        const productData = {
+          description: `
               <p>${productCopy}</p>\n</br>
               Código:${existingProduct?.codigo_ideal}\n</br>
               <p>${productSpecs}</p>`,
-              seo_title: seoTitle,
-              seo_description: seoDescription,
-            }
-          // Atualizando o produto no MongoDB com os dados gerados
-            existingProduct.seotitle = seoTitle ?? undefined;
-          existingProduct.seodescription = seoDescription ?? undefined;
-            existingProduct.description = productData.description;
-            /* salvar */
-          await existingProduct.save();
-
-          results.push(
-            `Descrição e Metadados Gerados com sucesso Produto:${product.codigo}`
-          );
-        } catch (error: any) {
-          console.log(error);
-          // Caso ocorra um erro ao tentar excluir o produto na Nuvemshop
-          results.push({
-            error: error.message,
-            idealProductId: product.codigo,
-            obs: "Erro ao tentar deletar produto", // Registra o erro no array de resultados
-          });
+          seo_title: seoTitle,
+          seo_description: seoDescription,
         }
-      
+        // Atualizando o produto no MongoDB com os dados gerados
+        existingProduct.seotitle = seoTitle ?? undefined;
+        existingProduct.seodescription = seoDescription ?? undefined;
+        existingProduct.description = productData.description;
+        /* salvar */
+        await existingProduct.save();
+
+        results.push(
+          `Descrição e Metadados Gerados com sucesso Produto:${product.codigo}`
+        );
+      } catch (error: any) {
+        console.log(error);
+        // Caso ocorra um erro ao tentar excluir o produto na Nuvemshop
+        results.push({
+          error: error.message,
+          idealProductId: product.codigo,
+          obs: "Erro ao tentar deletar produto", // Registra o erro no array de resultados
+        });
+      }
+
 
       res.status(200).json(results);
     } catch (error) {
