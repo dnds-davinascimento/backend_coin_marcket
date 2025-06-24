@@ -47,13 +47,27 @@ const corsOrigins = [
   'https://frontend-croi-distribuidora.vercel.app',
   'https://croidistribuidora.com.br',
   'https://www.croidistribuidora.com.br',
-]
+  /\.croidistribuidora\.com\.br$/, // permite qualquer subdomínio
+];
+
 // Configura o CORS para permitir requisições da origem do frontend
 app.use(cors({
-  origin: corsOrigins,
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // permite postman ou requests diretas
+
+    if (
+      corsOrigins.includes(origin) ||
+      corsOrigins.some(o => o instanceof RegExp && o.test(origin))
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
+
 // Middleware para lidar com as solicitações OPTIONS
 app.options("/api*", cors());
 
