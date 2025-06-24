@@ -187,7 +187,7 @@ router.route("/categorias").post(
  */ 
 router.route("/categorias").get(
   
-checkToken, permissionsMiddleware('categoria'),
+/* checkToken, permissionsMiddleware('categoria'), */
   (req: Request, res: Response) => categoriaControllers.getByLoja(req, res)
 );
 
