@@ -1247,6 +1247,24 @@ const produto_Schema = {
         .json({ msg: "Erro no servidor, tente novamente mais tarde" });
     }
   },
+  getProductBySlug: async (req: Request, res: Response) => {
+    const slug = req.params.slug; // Pega o slug do produto dos parâmetros da rota
+   
+    if (!slug) {
+      res.status(400).json({ msg: "Slug não fornecido." });
+      return;
+    }
+    try {
+      const produto = await Produto.findOne({ nome: slug });
+      if (!produto) {
+        res.status(404).json({ msg: "Produto não encontrado." });
+        return;
+      }
+      res.status(200).json(produto);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar produto" });
+    } 
+  }
 
 
 

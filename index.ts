@@ -30,17 +30,12 @@ connectDB();
 })(); */
 
 
-
 // Middleware para interpretar JSON no body das requisições
 app.use(express.json());
 
 // Configura o CORS para permitir requisições apenas da origem do seu frontend
 // Configura o CORS para permitir requisições apenas da origem do seu frontend
-const corsOptions = {
-  origin: ['http://localhost:3000', 'https://frontend-shop-fusion.vercel.app', 'https://shopfusion.croi.tech/'], // Permite apenas os frontends listados
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Permite os métodos HTTP necessários
-  allowedHeaders: ['Content-Type', 'Authorization'], // Permite os cabeçalhos necessários
-};
+
 
 const corsOrigins = [
   'http://localhost:3000',
@@ -52,20 +47,10 @@ const corsOrigins = [
 
 // Configura o CORS para permitir requisições da origem do frontend
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // permite postman ou requests diretas
-
-    if (
-      corsOrigins.includes(origin) ||
-      corsOrigins.some(o => o instanceof RegExp && o.test(origin))
-    ) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true,
+  origin: corsOrigins,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Permite os métodos HTTP necessários
+ // Permite os cabeçalhos necessários
+  credentials: true, // Permite cookies e credenciais
 }));
 
 // Middleware para lidar com as solicitações OPTIONS

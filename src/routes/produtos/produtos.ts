@@ -273,6 +273,12 @@ router.route("/products/:id").get(
   permissionsMiddleware('product'),
   (req: Request, res: Response) => produtoControllers.getProductById(req, res)
 );
+router.route("/products/slug/:slug").get(
+  /*     checkToken,
+      permissionsMiddleware('product'),  */
+  (req: Request, res: Response) => produtoControllers.getProductBySlug(req, res)
+);
+
 /* rota de deletar produto por id editProductById */
 router.route("/products/:id").delete(
   checkToken,
