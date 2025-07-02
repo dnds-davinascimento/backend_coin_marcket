@@ -131,5 +131,8 @@ router.route("/getCustomerById/:id").get(
 router.route("/getCustomersByStore").get(
     (req: Request, res: Response) => customerControllers.getCustomersByStore(req, res)
   );
+router.route("/deleteCustomer/:id").delete(
+    (req: Request, res: Response) => customerControllers.deleteCustomer(req, res)
+  );
 
 export default router;

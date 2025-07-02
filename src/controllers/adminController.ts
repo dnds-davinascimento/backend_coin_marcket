@@ -70,7 +70,7 @@ const adminController = {
     }
   },
     // Função para editar admin por ID
-    updateAdminById: async (req: Request, res: Response): Promise<void> => {
+   updateAdminById: async (req: Request, res: Response): Promise<void> => {
       const { id } = req.params; // Obtém o ID dos parâmetros da rota
       const { name, email, password, paymentAlert } = req.body;
      

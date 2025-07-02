@@ -4,9 +4,96 @@ import { Loja } from "../models/loja"; // Importa o model Loja
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import DocumentCustomerModel from "../models/dosc_custumer";
+import Admin from "../models/Admin"; // Importa o model Admin
+import nodemailer from "nodemailer";
+import User from "../models/user";
 
 dotenv.config();
 
+const sendEmail = async (newCustomer: any, emails: string[]) => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "venda.croi.ns@gmail.com",
+      pass: "dehq eejp kpql xcjc",
+    },
+  });
+const mailOptions = {
+  from: '"CROI Distribuidora" <venda.croi.ns@gmail.com>',
+  to: emails.join(","),
+  subject: "🆕 Novo cliente cadastrado na plataforma CROI",
+  html: `
+    <div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;border:1px solid #eee;border-radius:8px;overflow:hidden;">
+      <div style="background-color:#0a3d62;padding:20px;text-align:center;color:white;">
+        <img src="https://croidistribuidora.com.br/_next/image?url=%2Fimages%2Flogo%2Flogo.png&w=200&q=75" alt="Logo CROI" style="max-width:140px;margin-bottom:10px;" />
+        <h1 style="margin:0;font-size:22px;">Novo Cliente Cadastrado</h1>
+        <p style="margin:5px 0 0;">Um novo parceiro entrou na rede 🚀</p>
+      </div>
+
+      <div style="padding:20px;background-color:#f9f9f9;">
+        <h2 style="color:#0a3d62;margin-bottom:10px;">📋 Detalhes do Cliente</h2>
+        <table style="width:100%;border-collapse:collapse;font-size:15px;">
+          <tr>
+            <td style="padding:8px;font-weight:bold;">Nome:</td>
+            <td style="padding:8px;">${newCustomer.name}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px;font-weight:bold;">Email:</td>
+            <td style="padding:8px;">${newCustomer.email || "Não informado"}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px;font-weight:bold;">Telefone:</td>
+            <td style="padding:8px;">${newCustomer.phone || "Não informado"}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px;font-weight:bold;">Tipo:</td>
+            <td style="padding:8px;">${newCustomer.type}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px;font-weight:bold;">CPF/CNPJ:</td>
+            <td style="padding:8px;">${newCustomer.cpf_cnpj || "Não informado"}</td>
+          </tr>
+          ${newCustomer.razao_social ? `
+          <tr>
+            <td style="padding:8px;font-weight:bold;">Razão Social:</td>
+            <td style="padding:8px;">${newCustomer.razao_social}</td>
+          </tr>` : ""}
+          ${newCustomer.nome_fantasia ? `
+          <tr>
+            <td style="padding:8px;font-weight:bold;">Nome Fantasia:</td>
+            <td style="padding:8px;">${newCustomer.nome_fantasia}</td>
+          </tr>` : ""}
+          <tr>
+            <td style="padding:8px;font-weight:bold;">Data de Cadastro:</td>
+            <td style="padding:8px;">${new Date(newCustomer.createdAt).toLocaleString("pt-BR")}</td>
+          </tr>
+        </table>
+
+        <div style="margin-top:30px;text-align:center;">
+          <a href="https://croidistribuidora.com.br/painel/clientes" style="background-color:#0a3d62;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;display:inline-block;">
+            🔎 Ver no Painel
+          </a>
+        </div>
+      </div>
+
+      <div style="background-color:#f1f1f1;text-align:center;padding:15px;font-size:12px;color:#555;">
+        <p style="margin:0;">Email automático enviado por <strong>CROI Distribuidora</strong></p>
+        <p style="margin:5px 0 0;">Se você não é o destinatário deste e-mail, por favor, ignore.</p>
+      </div>
+    </div>
+  `
+};
+
+
+ 
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+
+  } catch (error) {
+    console.error("Erro ao enviar e-mail: ", error);
+  }
+};
 const customerController = {
   createCustomer: async (req: Request, res: Response): Promise<void> => {
     const {
@@ -100,6 +187,29 @@ const customerController = {
 
       // Salvar no banco de dados
       await newCustomer.save();
+        /* buscar admin */
+        const admin = await Admin.findById("6807a4d7860872fd82906b3f")
+        if (!admin) {
+          res.status(404).json({ msg: "Admin não encontrado para esta loja" });
+          return;
+        }
+        const emails = [];
+        if (admin.paymentAlert === true) {
+          emails.push(admin.email);
+        }
+
+        // Busca outros usuários com `paymentAlert: true` que pertencem à loja do admin
+        const users = await User.find({ user_store_id: store, paymentAlert: true });
+
+        // Adiciona os emails dos usuários encontrados
+        emails.push(...users.map(user => user.email));
+
+        console.log(emails);
+
+
+        // Somente envia o e-mail se a sequência ideal tiver sido salva com sucesso
+       
+          await sendEmail(newCustomer, emails); // Passar os e-mails como argumento
 
       // Retornar resposta sem informações sensíveis
       res.status(201).json({
