@@ -46,5 +46,17 @@ const router: Router = Router();
 router.route("/login").post(
   (req: Request, res: Response) => loginControllers.login(req, res)
 );
+router.route("/forgotpassword").post(
+  (req: Request, res: Response) => loginControllers.ForgotPassword(req, res)
+);
+router.route("/validatetoken").get(
+  (req: Request, res: Response) => loginControllers.ValidateToken(req, res)
+);
+router.route("/resetpassword").post(
+  (req: Request, res: Response) => loginControllers.ResetPassword(req, res)
+);
+
+
+
 
 export default router;
