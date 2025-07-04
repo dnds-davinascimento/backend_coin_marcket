@@ -12,6 +12,7 @@ import cartRouter from "./cart/cart"
 import credenciaisRouter from "./credenciais/credenciais";
 import docsCustomersRouter from "./docsCustomers/docsCustomers";
 import contatoRouter from "./contato/contato";
+import reviewstoreRouter from "./reviewstore/reviewstore";
 
 
 const router: Router = Router();
@@ -30,6 +31,7 @@ router.use("/",vendaRouter);
 router.use("/", credenciaisRouter);
 router.use("/", docsCustomersRouter);
 router.use("/", contatoRouter);
+router.use("/", reviewstoreRouter);
 
 
 
