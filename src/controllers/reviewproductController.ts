@@ -63,11 +63,6 @@ const reviewproductController = {
 
       const reviews = await ReviewProductModel.find({productId: id })
         .sort({ createdAt: -1 }) // Ordenar por data de criação, do mais recente para o mais antigo
-        
-      if (reviews.length === 0) {
-        res.status(404).json({ msg: "Nenhuma avaliação encontrada." });
-        return;
-      }
 
       res.status(200).json({ reviews });
     } catch (error) {
