@@ -13,6 +13,7 @@ import credenciaisRouter from "./credenciais/credenciais";
 import docsCustomersRouter from "./docsCustomers/docsCustomers";
 import contatoRouter from "./contato/contato";
 import reviewstoreRouter from "./reviewstore/reviewstore";
+import reviewproductRouter from "./reviewproduct/reviewproduct";
 
 
 const router: Router = Router();
@@ -32,6 +33,7 @@ router.use("/", credenciaisRouter);
 router.use("/", docsCustomersRouter);
 router.use("/", contatoRouter);
 router.use("/", reviewstoreRouter);
+router.use("/", reviewproductRouter);
 
 
 
