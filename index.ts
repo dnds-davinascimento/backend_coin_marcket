@@ -1,75 +1,77 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import cors from 'cors'
+import cors from 'cors';
 import routes from './src/routes/router';
 import connectDB from './src/config/db';
 import swaggerUi from 'swagger-ui-express';
 import swaggerDocs from './swaggerConfig';
 import basicAuth from 'express-basic-auth';
 import cookieParser from 'cookie-parser';
-/* import agenda from './src/agenda/agenda' */
-
+// import agenda from './src/agenda/agenda';
 
 // Carrega as variáveis de ambiente
 dotenv.config();
 
 // Inicializa o app Express
 const app = express();
+
 // Middleware para lidar com cookies
 app.use(cookieParser());
-
-
 
 // Conecta ao banco de dados MongoDB
 connectDB();
 
-// Agenda
-/* (async function() {
+// Agenda (comentar se não estiver usando)
+/*
+(async function() {
   await agenda.start();
   await agenda.every('1 hour', 'sincronizar estoque');
-})(); */
-
+})();
+*/
 
 // Middleware para interpretar JSON no body das requisições
 app.use(express.json());
 
-// Configura o CORS para permitir requisições apenas da origem do seu frontend
-// Configura o CORS para permitir requisições apenas da origem do seu frontend
-
-
-const corsOrigins = [
-  'http://localhost:3000',
-  'https://frontend-croi-distribuidora.vercel.app',
-  'https://croidistribuidora.com.br',
-  'https://www.croidistribuidora.com.br',
-  /\.croidistribuidora\.com\.br$/, // permite qualquer subdomínio
-];
-
-// Configura o CORS para permitir requisições da origem do frontend
+// Middleware de CORS com função personalizada para aceitar múltiplos domínios
 app.use(cors({
-  origin: corsOrigins,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Permite os métodos HTTP necessários
- // Permite os cabeçalhos necessários
-  credentials: true, // Permite cookies e credenciais
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // Permite chamadas sem origin (ex: curl/Postman)
+
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'https://frontend-croi-distribuidora.vercel.app',
+      'https://croidistribuidora.com.br',
+      'https://www.croidistribuidora.com.br',
+    ];
+
+    if (allowedOrigins.includes(origin) || /\.croidistribuidora\.com\.br$/.test(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS: ' + origin));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
 }));
 
-// Middleware para lidar com as solicitações OPTIONS
-app.options("/api*", cors());
+// Middleware para lidar com requisições OPTIONS
+app.options('*', cors());
 
-// Configurar a rota onde o Swagger vai servir a documentação
+// Documentação Swagger protegida com auth
 app.use(
   '/docs',
   basicAuth({
-    users: { 'admin': '@Croi.2025' }, // Defina o nome de usuário e senha
+    users: { 'admin': '@Croi.2025' },
     challenge: true,
   }),
   swaggerUi.serve,
   swaggerUi.setup(swaggerDocs)
 );
-// Rotas
-app.use("/api", routes);
 
-// Configura a porta do servidor
+// Rotas principais
+app.use('/api', routes);
+
+// Inicializa o servidor
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
