@@ -1264,6 +1264,245 @@ const produto_Schema = {
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar produto" });
     } 
+  },
+  sincronizarPrecosShop9MongoDB: async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    try {
+      res.status(200).json({ msg: "Sincronização de preços iniciada, aguarde um e-mail para verificar as mudanças." });
+      console.log("Sincronização de preços iniciada.");
+      const id_loja = req.headers.user_store_id as string;
+      
+      // Obter as credenciais do usuário
+      const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
+      
+      const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
+      // Obter o token de autenticação para Idealsoft
+      const token = await authService.getAuthToken(serie, codFilial, api);
+      const method = "get";
+      const body = "";
+      const { signature, timestamp } = generateSignature(method, senha, body);
+
+      const headersIdeal = {
+        Signature: signature,
+        CodFilial: codFilial,
+        Authorization: `Token ${token}`,
+        Timestamp: timestamp.toString(),
+      };
+
+ 
+
+
+      // Marcar o início da sincronização
+      const inicioSincronizacao = Date.now();
+      let paginaIdeal = 1;
+      let produtosIdeal: ProductIdeal[] = [];
+      let fimDePagina = false;
+
+      // Loop para buscar todos os produtos da Shop9 por paginação
+      while (!fimDePagina) {
+        const { data: produtosPagina } =
+          await axios.get<Response_ideal_product_pagination>(
+            `${url_ideal}/produtos/${paginaIdeal}`,
+            { headers: headersIdeal }
+          );
+
+        produtosIdeal = produtosIdeal.concat(produtosPagina.dados);
+
+        if (
+
+          produtosPagina.tipo === "FIM_DE_PAGINA"
+        ) {
+          fimDePagina = true;
+        } else {
+          paginaIdeal++;
+        }
+      }
+
+      console.log(`Total de produtos pegos na Shop9: ${produtosIdeal.length}`);
+
+      // Agora buscamos os produtos da Nuvemshop por página
+
+
+      // Comparação e atualização de preços
+    for (const produto of produtosIdeal) {
+  if (!produto || !produto.codigo) continue;
+
+  const existingProduct = await Produto.findOne({ codigo_ideal: produto.codigo });
+
+  if (!existingProduct) {
+   
+    continue;
+  }
+
+  // Só sincroniza se o campo observacao3 estiver preenchido
+  if (!produto.observacao3) continue;
+
+  const precosMongo: tabelas_precos[] = existingProduct.tabelas_precos || [];
+
+  const precosIdeal = (produto.precos || []).map((preco: any) => ({
+    nome: preco.tabela,
+    valor: parseFloat(preco.preco.toFixed(2)),
+    promocional: preco.promocional
+  }));
+
+  const precosMongoMap = new Map<string, { valor: number, promocional: boolean }>();
+  precosMongo.forEach(p =>
+      precosMongoMap.set(p.nome, {
+        valor: parseFloat(p.valor ?? "0"),
+        promocional: p.promocional ?? false
+      })
+    );
+
+let precoAtualizado = false;
+const alteracoes: string[] = [];
+
+for (const precoIdeal of precosIdeal) {
+  const precoMongo = precosMongoMap.get(precoIdeal.nome);
+
+  if (!precoMongo) {
+    alteracoes.push(`➕ Nova tabela adicionada: ${precoIdeal.nome} = R$${precoIdeal.valor.toFixed(2)} (promo: ${precoIdeal.promocional})`);
+    precoAtualizado = true;
+    continue;
+  }
+
+  if (
+    precoMongo.valor !== precoIdeal.valor ||
+    precoMongo.promocional !== precoIdeal.promocional
+  ) {
+    alteracoes.push(`🟡 ${precoIdeal.nome} alterado: R$${precoMongo.valor.toFixed(2)} → R$${precoIdeal.valor.toFixed(2)} (promo: ${precoMongo.promocional} → ${precoIdeal.promocional})`);
+    precoAtualizado = true;
+  }
+}
+
+
+if (precoAtualizado) {
+  await Produto.updateOne(
+    { codigo_ideal: produto.codigo },
+    {
+      $set: {
+        tabelas_precos: precosIdeal,
+        preco_de_custo: precosIdeal[0]?.valor || 0,
+        preco_de_venda: precosIdeal[0]?.valor || 0
+      }
+    }
+  );
+  
+  console.log(`✅ Preços atualizados para o produto ${produto.codigo} - ${produto.nome}`);
+  alteracoes.forEach(a => console.log(a));
+}
+
+}
+
+
+      // Calcular o tempo total de sincronização
+      const fimSincronizacao = Date.now();
+      const tempoTotal = (fimSincronizacao - inicioSincronizacao) / 1000; // em segundos
+      console.log(`Tempo total de sincronização: ${tempoTotal} segundos`);
+
+
+
+
+
+
+
+    } catch (error) {
+      console.log(error);
+      res
+        .status(500)
+        .json({ msg: "Erro no servidor, tente novamente mais tarde." });
+    }
+  },
+  sincronizarEstoqueShop9MongoDB: async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    try {
+      res.status(200).json({ msg: "Sincronização de estoque iniciada, aguarde um e-mail para verificar as mudanças." });
+      console.log("Sincronização de estoque iniciada.");
+        const id_loja = req.headers.user_store_id as string;
+      const user_store_id = req.headers.id as string;
+      
+      
+      // Obter as credenciais do usuário
+      const { serie, api, codFilial, senha } = await obterCredenciais(id_loja || user_store_id);
+      
+      const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
+      // Obter o token de autenticação para Idealsoft
+      const token = await authService.getAuthToken(serie, codFilial, api);
+      const method = "get";
+      const body = "";
+      const { signature, timestamp } = generateSignature(method, senha, body);
+
+      const headersIdeal = {
+        Signature: signature,
+        CodFilial: codFilial,
+        Authorization: `Token ${token}`,
+        Timestamp: timestamp.toString(),
+      };
+
+      // Marcar o início da sincronização
+      const inicioSincronizacao = Date.now();
+      let paginaIdeal = 1;
+      let produtosIdeal: ProductIdeal[] = [];
+      let fimDePagina = false;
+
+      // Loop para buscar todos os produtos da Shop9 por paginação
+      while (!fimDePagina) {
+        const { data: produtosPagina } =
+          await axios.get<Response_ideal_product_pagination>(
+            `${url_ideal}/produtos/${paginaIdeal}`,
+            { headers: headersIdeal }
+          );
+
+        produtosIdeal = produtosIdeal.concat(produtosPagina.dados);
+
+        if (
+
+          produtosPagina.tipo === "FIM_DE_PAGINA"
+        ) {
+          fimDePagina = true;
+        } else {
+          paginaIdeal++;
+        }
+      }
+
+      console.log(`Total de produtos pegos na Shop9: ${produtosIdeal.length}`);
+      // Agora buscamos os produtos da Nuvemshop por página
+      // Comparação e atualização de estoque
+      for (const produto of produtosIdeal) {
+        if (!produto || !produto.codigo) continue;
+
+        const existingProduct = await Produto.findOne({ codigo_ideal: produto.codigo });
+
+        if (!existingProduct) {
+          continue; // Pular para o próximo produto se não existir
+        }
+
+        // Só sincroniza se o campo observacao3 estiver preenchido
+        if (!produto.observacao3) continue;
+
+        const estoqueIdeal = produto.estoqueAtual || 0; // Usando estoqueAtual do produto
+        const estoqueMongo = existingProduct.estoque || 0; // Usando estoque do MongoDB
+
+        if (estoqueIdeal !== estoqueMongo) {
+          existingProduct.estoque = estoqueIdeal;
+          existingProduct.estoque_vendido = 0; // Resetando o estoque vendido
+          await existingProduct.save();
+          console.log(`✅ Estoque atualizado para o produto ${produto.codigo} - ${produto.nome}: estoque ideal ${estoqueIdeal} estoque MongoDB ${estoqueMongo}`);
+        }
+      }
+      // Calcular o tempo total de sincronização
+      const fimSincronizacao = Date.now();
+      const tempoTotal = (fimSincronizacao - inicioSincronizacao) / 1000; // em segundos
+      console.log(`Tempo total de sincronização: ${tempoTotal} segundos`);
+    } catch (error) {
+      console.log(error);
+      res
+        .status(500)
+        .json({ msg: "Erro no servidor, tente novamente mais tarde." });
+    }
   }
 
 

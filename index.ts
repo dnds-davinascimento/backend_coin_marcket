@@ -7,6 +7,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerDocs from './swaggerConfig';
 import basicAuth from 'express-basic-auth';
 import cookieParser from 'cookie-parser';
+import agenda from './src/agenda/agenda'
 // import agenda from './src/agenda/agenda';
 
 // Carrega as variáveis de ambiente
@@ -22,12 +23,12 @@ app.use(cookieParser());
 connectDB();
 
 // Agenda (comentar se não estiver usando)
-/*
+
 (async function() {
   await agenda.start();
-  await agenda.every('1 hour', 'sincronizar estoque');
+  await agenda.every('at 06:00', 'sincronizar estoque');
 })();
-*/
+
 
 // Middleware para interpretar JSON no body das requisições
 app.use(express.json());

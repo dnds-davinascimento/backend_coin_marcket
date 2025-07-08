@@ -4,18 +4,18 @@ const swaggerOptions: swaggerJSDoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Distribuidora Croi.tech API',
+      title: 'Croi Distribuidora API',
       version: '1.0.0',
       description: 'Documentação API gerada com Swagger',
       contact: {
         name: 'Shop Fusion',
-        url: 'https://distribuidora.croi.tech/',
+        url: 'https://croidistribuidora.com.br/',
         email: 'distribuidora@croi.tech',
       },
     },
     servers: [
       {
-        url: 'distribuidora.croi.tech/api', // Coloque o URL do seu servidor
+        url: 'https://croidistribuidora.com.br/api', // Coloque o URL do seu servidor
       },
     ],
   },

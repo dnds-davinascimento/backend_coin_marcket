@@ -316,4 +316,14 @@ router.route("/sinc_metadados_IA").post(
       permissionsMiddleware('product'),  */
   (req: Request, res: Response) => produtoControllers.sinc_metadados_IA(req, res)
 );
+router.route("/sincronizarPrecosShop9MongoDB").post(
+  /*     checkToken,
+      permissionsMiddleware('product'),  */
+  (req: Request, res: Response) => produtoControllers.sincronizarPrecosShop9MongoDB(req, res)
+);
+router.route("/sincronizarEstoqueShop9MongoDB").post(
+  /*     checkToken,
+      permissionsMiddleware('product'),  */
+  (req: Request, res: Response) => produtoControllers.sincronizarEstoqueShop9MongoDB(req, res)
+);
 export default router;
