@@ -82,6 +82,7 @@ const loginController = {
         permissions: existingUser?.permissions,
         isAdmin: existingAdmin ? true : false,
         isCustomer: existingCustomer ? true : false,
+        typeCustomer: existingCustomer ? existingCustomer.type : null,
         isUser: existingUser ? true : false,
       };
       
@@ -104,7 +105,7 @@ const loginController = {
         });
 
     } catch (error) {
-      console.log(error);
+      
       res.status(500).json({ msg: 'Erro no servidor, tente novamente mais tarde.' });
     }
   },
@@ -204,8 +205,7 @@ await ResetToken.create({
       // Marcar o token como usado
       resetToken.used = true;
       await resetToken.save();
-      console.log("Token decodificado: ", decoded);
-      console.log("Token válido: ", token);
+     
       res.status(200).json({ msg: 'Token válido.' });
     } catch (error) {
       console.error("Erro ao validar token: ", error);
@@ -218,7 +218,7 @@ await ResetToken.create({
       res.status(400).json({ msg: 'Preencha todos os campos.' });
       return;
     }
-    console.log("Token recebido: ", token);
+    
 
     try {
       const secret = process.env.JWT_SECRET as string;

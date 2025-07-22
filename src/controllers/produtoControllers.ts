@@ -55,13 +55,7 @@ interface ICategoria {
   id: Types.ObjectId;
   nome?: string;
 }
-interface tabelas_precos {
-  nome: string;
-  valor?: string;
-  mostrar?: boolean;
-  id?: string;
-  promocional?: boolean;
-}
+
 
 
 
@@ -108,7 +102,16 @@ interface IProdutoBody {
   icms?: number;
   ipi?: number;
   frete?: number;
-  tabelas_precos?: tabelas_precos[];
+  tabelas_precos?: [{
+  nome: string;
+  valor?: string;
+  mostrar?: boolean;
+  precopj?: boolean;
+  precopf?: boolean;
+  id?: string;
+  promocional?: boolean;
+}];
+
   produto_da_loja?: string;
   produto_do_fornecedor?: string;
   produto_verify?: boolean;
@@ -533,6 +536,7 @@ const produto_Schema = {
       estoque,
       estoque_vendido,
       un,
+      tabelas_precos,
       imgs,
       preco_de_custo,
       preco_de_venda,
@@ -554,9 +558,15 @@ const produto_Schema = {
       produto_servico = false, // Valor padrão
       mostrar_no_super_market = false, // Valor padrão
     } = req.body.produto as IProdutoBody; // Pega os dados do produto do corpo da requisição
+   
 
-    // Pega as imagens do corpo da requisição, se não houver, inicializa como array vazio
     try {
+
+if (tabelas_precos && tabelas_precos.length > 0) {
+  produto.tabelas_precos = tabelas_precos; // substitui todo o array
+}
+
+
       produto.nome = nome || produto.nome;
       produto.categoria = categoria || produto.categoria;
       produto.codigo_interno = codigo_interno || produto.codigo_interno;
@@ -576,6 +586,8 @@ const produto_Schema = {
       produto.cest = cest || produto.cest;
       produto.cst = cst || produto.cst;
       produto.cfop = cfop || produto.cfop;
+     /*  produto.tabelas_precos = (tabelas_precos && tabelas_precos.length > 0 ? [tabelas_precos[0]] : produto.tabelas_precos); */
+
       produto.origem_da_mercadoria = origem_da_mercadoria || produto.origem_da_mercadoria;
       produto.peso_bruto_em_kg = peso_bruto_em_kg || produto.peso_bruto_em_kg;
       produto.peso_liquido_em_kg = peso_liquido_em_kg || produto.peso_liquido_em_kg;
@@ -1339,7 +1351,7 @@ const produto_Schema = {
   // Só sincroniza se o campo observacao3 estiver preenchido
   if (!produto.observacao3) continue;
 
-  const precosMongo: tabelas_precos[] = existingProduct.tabelas_precos || [];
+  const precosMongo = existingProduct.tabelas_precos || [];
 
   const precosIdeal = (produto.precos || []).map((preco: any) => ({
     nome: preco.tabela,
@@ -1496,9 +1508,9 @@ if (precoAtualizado) {
       // Calcular o tempo total de sincronização
       const fimSincronizacao = Date.now();
       const tempoTotal = (fimSincronizacao - inicioSincronizacao) / 1000; // em segundos
-      console.log(`Tempo total de sincronização: ${tempoTotal} segundos`);
+      
     } catch (error) {
-      console.log(error);
+      
       res
         .status(500)
         .json({ msg: "Erro no servidor, tente novamente mais tarde." });

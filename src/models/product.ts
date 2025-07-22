@@ -90,6 +90,8 @@ interface IProduto extends Document {
     nome: string;
     valor?: string;
     mostrar?: boolean;
+    precopj?: boolean;
+    precopf?: boolean;
     id?: string;
     promocional?: boolean;
   }];
@@ -277,6 +279,8 @@ const produtoSchema = new Schema<IProduto>(
         nome: { type: String, required: true },
         valor: { type: String, required: false },
         mostrar: { type: Boolean, default: true },
+        precopj: { type: Boolean, default: false },
+        precopf: { type: Boolean, default: false },
         promocional: { type: Boolean, default: false },
         
       },
