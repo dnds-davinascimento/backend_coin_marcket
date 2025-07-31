@@ -21,7 +21,7 @@ const userController = {
     }
     const id_store = loja._id; // ID da loja
 
-    const { email, password, name, permissions, paymentAlert } = req.body;
+    const { email, password, name, permissions, paymentAlert,cargo } = req.body;
 
     try {
       // Verificar se o email já existe
@@ -39,12 +39,16 @@ const userController = {
       const newUser = new User({
         name,
         email,
+        cargo,
         paymentAlert,
         password: hashedPassword,
         user_store_id: id_store,
         permissions: permissions || {
-          user: { view: false, create: false, edit: false, delete: false },
-          product: { view: false, create: false, edit: false, delete: false },
+       user: { view: false, create: false, edit: false, delete: false },
+    product: { view: false, create: false, edit: false, delete: false },
+    order: { view: false, create: false, edit: false, delete: false },
+    delivery: { view: false, create: false, edit: false, delete: false },
+    route: { view: false, create: false, edit: false, delete: false },
         },
       });
 
@@ -95,6 +99,19 @@ const userController = {
         .json({ msg: "Erro no servidor, tente novamente mais tarde" });
     }
   },
+  /* função parar listar apenas usuarios que são Motoristas */
+  getMotoristas: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const motoristas = await User.find({ cargo: 'Motorista' }).select(
+        'name email user_store_id'
+      );
+
+      res.status(200).json(motoristas);
+    } catch (error) {
+      console.error("Erro ao buscar motoristas:", error);
+      res.status(500).json({ message: "Erro ao buscar motoristas" });
+    }
+  },
   UserById: async (req: Request, res: Response): Promise<void> => {
     const userId = req.params.id; // Pega o ID do usuário dos parâmetros da rota
     
@@ -121,7 +138,7 @@ const userController = {
   // Função para editar um usuário por ID
   editUserById: async (req: Request, res: Response): Promise<void> => {
     const userId = req.params.id; // Pega o ID do usuário dos parâmetros da rota
-    const { name, email, password, permissions, paymentAlert } = req.body; // Dados a serem atualizados
+    const { name, email, password, permissions, paymentAlert,cargo } = req.body; // Dados a serem atualizados
    
 
     try {
@@ -135,6 +152,9 @@ const userController = {
       // Atualizar os campos do usuário se fornecidos
       if (name) user.name = name;
       if (email) user.email = email;
+      if (cargo) user.cargo = cargo;
+      if (typeof paymentAlert === 'boolean') // Verifica se paymentAlert é booleano
+      
       user.paymentAlert = paymentAlert;
 
       // Atualizar a senha se for fornecida (e criptografá-la)

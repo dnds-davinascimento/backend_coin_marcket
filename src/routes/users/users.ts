@@ -382,6 +382,10 @@ router.route("/delete_user/:id").delete(
   permissionsMiddleware('user'), 
   (req: Request, res: Response) => userController.deleteUserById(req, res)
 );
+router.route("/getMotoristas").get(
+
+  (req: Request, res: Response) => userController.getMotoristas(req, res)
+);
 
 
 

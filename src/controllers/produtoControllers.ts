@@ -55,10 +55,6 @@ interface ICategoria {
   id: Types.ObjectId;
   nome?: string;
 }
-
-
-
-
 interface IHistorico {
   usuario?: string;
   data: Date;
@@ -69,7 +65,6 @@ interface IHistorico {
   quantidade: number;
   estoqueAposAlteracao: number;
 }
-
 
 interface IProdutoBody {
   nome: string;

@@ -12,6 +12,8 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  cargo?: string;
+  telefone?: string;
   permissions: {
     cliente: PermissionSchema;
     };
@@ -26,6 +28,10 @@ const userSchema: Schema = new Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     paymentAlert:{type:Boolean, default: false},
+    cargo: {type: String, required: false},
+    telefone: { type: String, required: false },
+
+
     permissions: {
       user: { type: new Schema({
           view: { type: Boolean, default: false },
@@ -39,7 +45,25 @@ const userSchema: Schema = new Schema(
           edit: { type: Boolean, default: false },
           delete: { type: Boolean, default: false }
         }) },
-      // Replicar para todos os outros tipos de permissões...
+      order: { type: new Schema({
+          view: { type: Boolean, default: false },
+          create: { type: Boolean, default: false },
+          edit: { type: Boolean, default: false },
+          delete: { type: Boolean, default: false }
+        }) },
+      delivery: { type: new Schema({
+          view: { type: Boolean, default: false },
+          create: { type: Boolean, default: false },
+          edit: { type: Boolean, default: false },
+          delete: { type: Boolean, default: false }
+        }) },
+      route: { type: new Schema({
+          view: { type: Boolean, default: false },
+          create: { type: Boolean, default: false },
+          edit: { type: Boolean, default: false },
+          delete: { type: Boolean, default: false }
+        }) },
+      
     },
 
     user_store_id: { type: Schema.Types.ObjectId, ref: 'Store',require:true },

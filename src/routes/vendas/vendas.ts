@@ -36,6 +36,10 @@ router.route("/getOrderDetails/:id").get(
 
     (req: Request, res: Response) => vendaControllers.getOrderDetails(req, res)
   );
+router.route('/getsequencia').get(
+  (req: Request, res: Response) =>
+    vendaControllers.getsequencia(req, res)
+);
 
 
 

@@ -5,6 +5,10 @@ import { Cart } from "../models/cart";
 import Admin from "../models/Admin"; // Importa o model Admin
 import User from "../models/user"; // Importa o model User
 import { Customer } from "../models/custumer"; // Importa o model Customer
+import { obterCredenciais } from "../services/credenciaisService";
+import { generateSignature } from "../services/generateSignature";
+import authService from "../services/authService";
+import axios from "axios";
 interface IHistorico {
   usuario?: string;
   data: Date;
@@ -16,6 +20,151 @@ interface IEstagioProcesso {
   acao: string;
   tempo_do_processo?: string;
 }
+export interface OrdemVendaResponse {
+  sucesso: boolean;
+  mensagem: string | null;
+  tipo: string | null;
+  complementoTipo: string | null;
+  statusCode: number;
+  dados: DadosOrdemVenda;
+}
+
+export interface DadosOrdemVenda {
+  ordem: number;
+  sequencia: number;
+  tipo_Operacao: string;
+  codigo_Cliente: number;
+  codigo_Vendedor_1: number;
+  codigo_Vendedor_2: number;
+  data: string;
+  total_Com_Desconto: number;
+  total_Sem_Desconto: number;
+  desconto_Total_Geral: number;
+  observacao: string;
+  produtos: Produto[];
+  entrega: Entrega;
+  documento_Fiscais: DocumentoFiscal[];
+}
+
+export interface Produto {
+  ordem: number;
+  ordem_Prod_Serv: number;
+  codigo: string;
+  quantidade: number;
+  preco_Unitario: number;
+  preco_Final: number;
+  preco_Final_Com_Desconto: number;
+  desconto_Unitario: number;
+  desconto_Total: number;
+}
+
+export interface Entrega {
+  volume: number;
+  pesoBruto: number;
+  pesoLiquido: number;
+  opcoesFreteTipoEndereco: string;
+  opcoesFretePagoPor: string;
+  naoSomarFreteTotalNota: boolean;
+  endereco: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  cEP: string;
+  dataPrometidoPara: string;
+  situacao: string;
+  entregueEm: string | null;
+  entreguePara: string;
+  placa: string;
+  placaUF: string;
+  rNTC: string;
+  valor: number;
+  modoEntrega: string;
+  observacao: string;
+}
+
+export interface DocumentoFiscal {
+  numero: string;
+  data_Emissao: string;
+  situacao: string;
+  xML_Documento: string;
+  xML_Autorizacao: string;
+}
+interface ClienteDetalhes {
+  ordem: number;
+  codigo: number;
+  nome: string;
+  fantasia: string;
+  tipo: string;
+  fisicaJuridica: string;
+  cpfCnpj: string;
+  rg: string;
+  ie: string;
+  cep: string;
+  endereco: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  uf: string;
+  pais: string;
+  telefone1: string;
+  telefone2: string;
+  fax: string;
+  lGPD_Receber_Campanhas_Marketing: boolean;
+  lGPD_Receber_Contato_Situacao_Pedido: boolean;
+  lGPD_Telefone_Contato_Formatado: string;
+  entregaCep: string;
+  entregaEndereco: string;
+  entregaComplemento: string;
+  entregaBairro: string;
+  entregaCidade: string;
+  entregaUf: string;
+  entregaPais: string;
+  entregaPontoRef1: string;
+  entregaPontoRef2: string;
+  faturamentoCep: string;
+  faturamentoEndereco: string;
+  faturamentoNumero: string;
+  faturamentoComplemento: string;
+  faturamentoBairro: string;
+  faturamentoCidade: string;
+  faturamentoUf: string;
+  faturamentoPais: string;
+  faturamentoPontoRef1: string;
+  faturamentoPontoRef2: string;
+  indicadorIE: number;
+  vendedor1: {
+    ordem: number;
+    codigo: number;
+    nome: string;
+  };
+  vendedor2: {
+    ordem: number;
+    codigo: number;
+    nome: string;
+  };
+  tabelaPrecosPadrao: string;
+  codigoClasse: number;
+  codigoFilial: number;
+  filialExclusiva: boolean;
+  urlContatos: string;
+  utiliza_Fidelidade: boolean;
+  contatos: any[]; // pode tipar melhor se souber a estrutura
+  inativo: boolean;
+  comentariosGerente: string;
+}
+
+interface IdealSoftClienteResponse {
+  sucesso: boolean;
+  mensagem: string | null;
+  tipo: string | null;
+  complementoTipo: string | null;
+  statusCode: number;
+  dados: ClienteDetalhes;
+}
+
 const venda_Schema = {
   createOrder: async (req: Request, res: Response) => {
     try {
@@ -100,7 +249,7 @@ const venda_Schema = {
           contato: custumer.phone,
           endereco: enderecoConsumidor
         },
-        vendedor: vendedor || null, 
+        vendedor: vendedor || null,
         formas_de_pagamento_array: [],
         Numero_da_nota: undefined, // Será gerado posteriormente
         status_venda: "em análise", // Status inicial
@@ -209,6 +358,73 @@ const venda_Schema = {
         msg: "Erro interno ao buscar Order do consumidor",
         error: error instanceof Error ? error.message : "Erro desconhecido",
       });
+    }
+  },
+  getsequencia: async (req: Request, res: Response): Promise<void> => {
+    try {
+      let id_loja = req.headers.user_store_id as string;
+    if (!id_loja) {
+      id_loja = "6807ab4fbaead900af4db229"
+    }
+
+
+      // Obter credenciais usando o serviço
+      const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
+
+       const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
+
+
+      // Obter o token de autenticação para Idealsoft
+      const token = await authService.getAuthToken(serie, codFilial, api);
+      const method = "get";
+      const body = "";
+      const { signature, timestamp } = generateSignature(method, senha, body);
+
+      // pegar n° de recibo pelo req.headers
+      const sequenciaGerada = req.query.sequencia;
+
+      // 2. Configuração do cabeçalho da requisição
+      const headers = {
+        Signature: signature,
+        CodFilial: codFilial,
+        Authorization: `Token ${token}`,
+        Timestamp: timestamp.toString(),
+      };
+
+      // 3. Requisição para a API da Idealsoft com os headers
+      const { data } = await axios.get<OrdemVendaResponse>(
+        `${url_ideal}/saidas/detalhes/${sequenciaGerada}`,
+        { headers }
+      );
+
+      if (!data || !data.sucesso) {
+         res.status(404).json({ msg: "Sequência não encontrada ou erro na requisição" });
+      }
+      const codigo = data.dados.codigo_Cliente;
+
+
+            // Requisição para a API da Idealsoft com os headers e o código do cliente
+      const { data: RsponseClente } = await axios.get<IdealSoftClienteResponse>(`${url_ideal}/clientes/detalhes/${codigo}`, {
+        headers,
+      });
+
+      console.log("Dados do cliente:", RsponseClente.dados.nome);
+
+      /* incluir dados do cliente na resposta final dentro de dados */
+
+      const responseData = {
+        ...data,
+        dados: {
+          ...data.dados,
+          cliente: RsponseClente.dados
+        }
+      };
+      res.status(200).json(responseData);
+    } catch (error) {
+      console.log(error);
+      res
+        .status(500)
+        .json({ msg: "Erro no servidor, tente novamente mais tarde" });
     }
   },
   /* função para avanção o precesso de venda */
