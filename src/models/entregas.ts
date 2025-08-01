@@ -27,11 +27,11 @@ interface IObservacao {
   usuario: string;
   texto: string;
 }
-
 interface IEntrega extends Document {
- filial?: string;
+  numero: string;
+  filial?: string;
   sequencia: number;
-  
+  link_da_localizacao?: string;
   codigo_Cliente?: number;
   consumidor_nome?: string;
   consumidor_email?: string;
@@ -39,7 +39,7 @@ interface IEntrega extends Document {
   numero_nf: string;
   tipo_Operacao: string;
   tipo_Selecionado: string; // 'normal' | 'retirada'
-  entregador: {
+  vendedor: {
     id: string;
     nome: string;
   };
@@ -63,17 +63,18 @@ interface IEntrega extends Document {
 
 const entregaSchema = new Schema<IEntrega>(
   {
-    
+
     sequencia: { type: Number, required: true },
+    link_da_localizacao: { type: String },
     codigo_Cliente: { type: Number, required: false },
-    consumidor_nome: { type: String , required: true },
+    consumidor_nome: { type: String, required: true },
     consumidor_email: { type: String },
     consumidor_contato: { type: String },
     numero_nf: { type: String, required: true },
     tipo_Operacao: { type: String, required: true }, // 'normal' | 'retirada'
-    tipo_Selecionado: { type: String, required: true},
+    tipo_Selecionado: { type: String, required: true },
     filial: { type: String },
-    entregador: {
+    vendedor: {
       id: { type: String, required: true },
       nome: { type: String, required: true },
     },
@@ -90,8 +91,8 @@ const entregaSchema = new Schema<IEntrega>(
       enum: ['pendente', 'em_transporte', 'entregue', 'devolvido', 'cancelada'],
       default: 'pendente',
     },
-    data_entrega: { type: Date },
-    data_confirmacao_cliente: { type: Date },
+    data_entrega: { type: Date, default: null },
+    data_confirmacao_cliente: { type: Date, default: null },
     anexos: [
       {
         data: { type: Date, default: Date.now },

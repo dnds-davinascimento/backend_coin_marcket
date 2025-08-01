@@ -15,6 +15,9 @@ router.route("/getEntregas").get(
 router.route("/getEntregasDetails/:id").get(
     (req: Request, res: Response) => entregaController.getEntregasDetails(req, res)
   );
+router.route("/getEntregasPendentes").get(
+    (req: Request, res: Response) => entregaController.getEntregasPendentes(req, res)
+  );
 
 
 export default router;

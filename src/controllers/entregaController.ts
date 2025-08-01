@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Entrega } from "../models/entregas";
+import { link } from "fs";
 
 export interface DadosOrdemVenda {
   ordem: number;
@@ -142,42 +143,36 @@ const entregaController = {
   // Controlador para criar uma nova entrega
 createEntrega: async (req: Request, res: Response): Promise<void> => {
   try {
-    const dados: DadosOrdemVenda = req.body;
+    const dados= req.body;
+    
 
-
+    if (!dados || !dados.endereco_entrega) {
+      res.status(400).json({ message: "Dados de entrega inválidos" });
+      return;
+    }
+    // Verifica o ultimo número da entrega já existe  exemplo: 0001, 0002, 0003
+    const ultimoEntrega = await Entrega.findOne().sort({ numero: -1 });
+    const numeroSequencia = ultimoEntrega ? ultimoEntrega.sequencia + 1 : 1;
     const novaEntrega = new Entrega({
-      
+      link_da_localizacao: dados.link_da_localizacao || '',
+      numero: `ENT-${numeroSequencia.toString().padStart(4, '0')}`,
+
       sequencia: dados.sequencia,
       codigo_Cliente: dados.codigo_Cliente?.toString(),
-      consumidor_nome: dados.cliente.nome,
-      consumidor_email: dados.cliente.contatos[0]?.email || '',
-      consumidor_contato: dados.cliente.telefone1 || '',
-      numero_nf: dados.documento_Fiscais[0]?.numero || '',
+      consumidor_nome: dados.consumidor_nome,
+      consumidor_email: dados.consumidor_email || '',
+      consumidor_contato: dados.consumidor_contato || '',
+      numero_nf: dados.numero_nf || '',
       tipo_Operacao: dados.tipo_Operacao,
       tipo_Selecionado: dados.tipo_Selecionado,
       filial: dados.filial,
-      entregador: {
-        id: 'entregador_id_aqui', // Pega de outro lugar ou coloca fixo por enquanto
-        nome: dados.entrega.entreguePara || 'Não informado',
-      },
-      endereco_entrega: {
-        logradouro: dados.entrega.endereco,
-        numero: dados.entrega.numero,
-        bairro: dados.entrega.bairro,
-        descricaoCidade: dados.entrega.cidade,
-        estado: dados.entrega.estado,
-        cep: dados.entrega.cEP,
-      },
+      vendedor: dados.vendedor ,
+      endereco_entrega: dados.endereco_entrega,
       status_entrega: 'pendente',
-      data_entrega: dados.entrega.entregueEm ? new Date(dados.entrega.entregueEm) : undefined,
+      data_entrega: dados.data_entrega || null,
+      data_confirmacao_cliente: dados.data_confirmacao_cliente || null,
 
-      historico: [
-        {
-          usuario: 'sistema',
-          data: new Date(),
-          acao: 'Entrega criada a partir da ordem de venda',
-        },
-      ],
+      historico:dados.historico || [],
     });
 
     const saved = await novaEntrega.save();
@@ -200,10 +195,21 @@ getEntregas: async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ message: "Erro ao buscar entregas" });
   }
 },
+/* função para buscar entregas com status de pedente  */
+getEntregasPendentes: async (req: Request, res: Response): Promise<void> => {
+  try {
+    const entregasPendentes = await Entrega.find({ status_entrega: 'pendente' }).sort({ createdAt: -1 });
+
+    res.status(200).json(entregasPendentes);
+  } catch (error) {
+    console.error("Erro ao buscar entregas pendentes:", error);
+    res.status(500).json({ message: "Erro ao buscar entregas pendentes" });
+  }
+},
 getEntregasDetails: async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    console.log("ID da entrega:", id);
+   
     const entrega = await Entrega.findById(id);
 
     if (!entrega) {
