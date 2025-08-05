@@ -144,6 +144,7 @@ const entregaController = {
 createEntrega: async (req: Request, res: Response): Promise<void> => {
   try {
     const dados= req.body;
+   
     
 
     if (!dados || !dados.endereco_entrega) {
@@ -165,7 +166,7 @@ createEntrega: async (req: Request, res: Response): Promise<void> => {
       numero_nf: dados.numero_nf || '',
       tipo_Operacao: dados.tipo_Operacao,
       tipo_Selecionado: dados.tipo_Selecionado,
-      filial: dados.filial,
+      filial: dados.filial ,
       vendedor: dados.vendedor ,
       endereco_entrega: dados.endereco_entrega,
       status_entrega: 'pendente',
@@ -178,7 +179,7 @@ createEntrega: async (req: Request, res: Response): Promise<void> => {
     const saved = await novaEntrega.save();
     res.status(201).json({ message: "Entrega criada com sucesso", entrega: saved,sucesso: true });
   } catch (error) {
-    console.error("Erro ao criar entrega:", error);
+    
     res.status(500).json({ message: "Erro ao criar entrega" });
   }
 },
@@ -191,7 +192,7 @@ getEntregas: async (req: Request, res: Response): Promise<void> => {
 
     res.status(200).json(entregas);
   } catch (error) {
-    console.error("Erro ao buscar entregas:", error);
+    
     res.status(500).json({ message: "Erro ao buscar entregas" });
   }
 },
@@ -202,7 +203,7 @@ getEntregasPendentes: async (req: Request, res: Response): Promise<void> => {
 
     res.status(200).json(entregasPendentes);
   } catch (error) {
-    console.error("Erro ao buscar entregas pendentes:", error);
+   
     res.status(500).json({ message: "Erro ao buscar entregas pendentes" });
   }
 },
@@ -219,7 +220,7 @@ getEntregasDetails: async (req: Request, res: Response): Promise<void> => {
 
     res.status(200).json(entrega);
   } catch (error) {
-    console.error("Erro ao buscar detalhes da entrega:", error);
+    
     res.status(500).json({ message: "Erro ao buscar detalhes da entrega" });
   }
 }

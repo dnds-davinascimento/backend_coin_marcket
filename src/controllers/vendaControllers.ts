@@ -360,19 +360,16 @@ const venda_Schema = {
       });
     }
   },
-  getsequencia: async (req: Request, res: Response): Promise<void> => {
+  getsequencia: async (req: Request, res: Response): Promise<Response> => {
     try {
       let id_loja = req.headers.user_store_id as string;
-    if (!id_loja) {
-      id_loja = "6807ab4fbaead900af4db229"
-    }
-
-
+      if (!id_loja) {
+        id_loja = "6807ab4fbaead900af4db229"
+      }
       // Obter credenciais usando o serviço
       const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
 
-       const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
-
+      const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
 
       // Obter o token de autenticação para Idealsoft
       const token = await authService.getAuthToken(serie, codFilial, api);
@@ -396,19 +393,19 @@ const venda_Schema = {
         `${url_ideal}/saidas/detalhes/${sequenciaGerada}`,
         { headers }
       );
-
-      if (!data || !data.sucesso) {
-         res.status(404).json({ msg: "Sequência não encontrada ou erro na requisição" });
+      
+      if (data.dados === null) {
+        return res.status(404).json({ msg: "Venda não encontrada" });
       }
       const codigo = data.dados.codigo_Cliente;
 
-
-            // Requisição para a API da Idealsoft com os headers e o código do cliente
+      // Requisição para a API da Idealsoft com os headers e o código do cliente
       const { data: RsponseClente } = await axios.get<IdealSoftClienteResponse>(`${url_ideal}/clientes/detalhes/${codigo}`, {
         headers,
       });
 
-      console.log("Dados do cliente:", RsponseClente.dados.nome);
+
+     
 
       /* incluir dados do cliente na resposta final dentro de dados */
 
@@ -419,10 +416,10 @@ const venda_Schema = {
           cliente: RsponseClente.dados
         }
       };
-      res.status(200).json(responseData);
+      return res.status(200).json(responseData);
     } catch (error) {
-      console.log(error);
-      res
+      
+      return res
         .status(500)
         .json({ msg: "Erro no servidor, tente novamente mais tarde" });
     }
@@ -694,7 +691,7 @@ const venda_Schema = {
       const vendaId = req.params.id;
       const id_usuario = req.headers.id as string;
       const { key } = req.body;
-      console.log(req.body)
+      
 
       if (!vendaId || !id_usuario || !key) {
         return res.status(400).json({ msg: "ID da venda, do usuário e key do anexo são obrigatórios" });
@@ -732,7 +729,7 @@ const venda_Schema = {
         venda: vendaAtualizada
       });
     } catch (error) {
-      console.error("Erro ao remover anexo do Mongo:", error);
+      
       return res.status(500).json({ msg: `Erro interno ao remover anexo:${error}` });
     }
   }

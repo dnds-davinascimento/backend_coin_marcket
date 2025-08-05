@@ -38,7 +38,7 @@ router.use("/", contatoRouter);
 router.use("/", reviewstoreRouter);
 router.use("/", reviewproductRouter);
 router.use("/", entregaRouter);
-router.use("/rotas", rotaController); // Usando o controller de rotas
+router.use("/", rotaController); // Usando o controller de rotas
 router.use("/", veiculoRouter); // Usando o router de veículos
 
 

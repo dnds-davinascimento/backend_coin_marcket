@@ -29,7 +29,7 @@ interface IObservacao {
 }
 interface IEntrega extends Document {
   numero: string;
-  filial?: string;
+  filial: string;
   sequencia: number;
   link_da_localizacao?: string;
   codigo_Cliente?: number;
@@ -73,7 +73,7 @@ const entregaSchema = new Schema<IEntrega>(
     numero_nf: { type: String, required: true },
     tipo_Operacao: { type: String, required: true }, // 'normal' | 'retirada'
     tipo_Selecionado: { type: String, required: true },
-    filial: { type: String },
+    filial: { type: String,required: true },
     vendedor: {
       id: { type: String, required: true },
       nome: { type: String, required: true },
