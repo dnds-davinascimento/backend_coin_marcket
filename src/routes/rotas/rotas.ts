@@ -18,6 +18,4 @@ router.route("/buscarRotaPorId/:id").get(
   );
 
 
-
-
 export default router;
