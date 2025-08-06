@@ -4,7 +4,6 @@ import { checkToken, permissionsMiddleware } from '../../middlewares/checkToken'
 const router: Router = Router();
 
 
-
 router.route("/criarRota").post(
 
     (req: Request, res: Response) => rotaController.criarRota(req, res)
