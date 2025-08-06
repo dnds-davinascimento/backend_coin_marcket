@@ -22,7 +22,6 @@ jobs:
           USER: ubuntu  # Usuário da EC2 (no seu caso é "ubuntu")
           REPO_URL: git@github.com:croitech/backend_croi_distribuidora.git  # URL do repositório
           MONGO_URI: ${{ vars.MONGO_URI }}  # Adicionando a variável de ambiente do MongoDB
-         
           PORT: ${{ vars.PORT }}  # Exemplo de outra variável secreta
           NUVEMSHOP_API: ${{ vars.NUVEMSHOP_API }}  # Exemplo de outra variável secreta
           NUVEMSHOP_API_AUTH: ${{ vars.NUVEMSHOP_API_AUTH }}  # Exemplo de outra variável secreta
