@@ -9,6 +9,15 @@ router.route("/criarRota").post(
 
     (req: Request, res: Response) => rotaController.criarRota(req, res)
   );
+router.route("/listarRotas").get(
+
+    (req: Request, res: Response) => rotaController.listarRotas(req, res)
+  );
+router.route("/buscarRotaPorId/:id").get(
+
+    (req: Request, res: Response) => rotaController.buscarRotaPorId(req, res)
+  );
+
 
 
 

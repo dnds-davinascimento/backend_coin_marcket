@@ -1,0 +1,114 @@
+name: Deploy Node.js App to AWS EC2
+
+on:
+  push:
+    branches:
+      - main  # O workflow será disparado apenas na branch "main"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Passo 1: Checkout do código do repositório
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+           
+      # Passo 3: Conectar à EC2 via SSH e executar os comandos
+      - name: Deploy to EC2
+        env:
+          HOST: ec2-18-228-236-148.sa-east-1.compute.amazonaws.com  # DNS público da sua EC2
+          USER: ubuntu  # Usuário da EC2 (no seu caso é "ubuntu")
+          REPO_URL: git@github.com:croitech/backend_croi_distribuidora.git  # URL do repositório
+          MONGO_URI: ${{ vars.MONGO_URI }}  # Adicionando a variável de ambiente do MongoDB
+         
+          PORT: ${{ vars.PORT }}  # Exemplo de outra variável secreta
+          NUVEMSHOP_API: ${{ vars.NUVEMSHOP_API }}  # Exemplo de outra variável secreta
+          NUVEMSHOP_API_AUTH: ${{ vars.NUVEMSHOP_API_AUTH }}  # Exemplo de outra variável secreta
+          APP_ID_NUVEMSHOP: ${{ vars.APP_ID_NUVEMSHOP }}  # Exemplo de outra variável secreta
+          APP_SECRET_NUVEMSHOP: ${{ vars.APP_SECRET_NUVEMSHOP }}  # Exemplo de outra variável secreta
+          JWT_SECRET: ${{ vars.JWT_SECRET }}  # Exemplo de outra variável secreta
+        run: |
+          # Salvar a chave privada (modulointegracao.pem) em um arquivo temporário
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > /tmp/aws_key.pem
+          chmod 600 /tmp/aws_key.pem
+
+          # Conectar na instância EC2 via SSH e executar os comandos
+          ssh -o StrictHostKeyChecking=no -i /tmp/aws_key.pem $USER@$HOST << 'EOF'
+            # Verificar se o Docker está instalado
+            if ! command -v docker &> /dev/null
+            then
+              echo "Docker não encontrado. Instalando..."
+              sudo apt-get update
+              sudo apt-get install -y docker.io
+            else
+              echo "Docker já está instalado."
+            fi
+
+            # Verificar se o Docker Compose está instalado
+            if ! command -v docker-compose &> /dev/null
+            then
+              echo "Docker Compose não encontrado. Instalando..."
+              sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+            else
+              echo "Docker Compose já está instalado."
+            fi
+
+            # Verificar se o Node.js está instalado
+            if ! command -v npm &> /dev/null
+            then
+              echo "npm não encontrado. Instalando Node.js..."
+              sudo apt-get install -y nodejs npm
+            else
+              echo "npm já está instalado."
+            fi
+
+            # Defina o caminho do seu diretório de projeto na EC2
+            PROJECT_DIR="/home/ubuntu/backend_croi_distribuidora"
+
+            # Verificar se o diretório do projeto já existe
+            if [ ! -d "$PROJECT_DIR" ]; then
+              echo "Diretório do projeto não encontrado. Clonando o repositório..."
+              # Criar o diretório e clonar o repositório
+              mkdir -p $PROJECT_DIR
+              git clone $REPO_URL $PROJECT_DIR
+            else
+              echo "Diretório do projeto já existe. Atualizando repositório..."
+              cd $PROJECT_DIR
+              git pull origin main  # Atualiza o repositório com as mudanças mais recentes
+            fi
+
+            # Navegar até o diretório do projeto
+            cd $PROJECT_DIR || exit
+
+          
+            # Instalar as dependências do projeto (caso não tenha feito ainda)
+            echo "Instalando dependências..."
+            npm install
+
+            # Verificar se o arquivo docker-compose.yml existe
+            if [ ! -f "docker-compose.yml" ]; then
+              echo "Erro: docker-compose.yml não encontrado!"
+              exit 1
+
+            fi
+
+            # Parar o container que está rodando
+            echo "Parando o container que está rodando..."
+            docker-compose down
+
+            # Limpar containers parados, volumes e imagens antigas para liberar espaço
+            echo "Limpando containers, volumes e imagens não utilizadas..."
+            docker system prune -af --volumes
+
+            # Reiniciar o container da aplicação
+            echo "Reiniciando o container da aplicação..."
+            docker-compose up -d --build
+
+            # Verificar o status dos containers
+            echo "Verificando status dos containers..."
+            docker-compose ps
+
+          EOF

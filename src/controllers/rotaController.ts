@@ -90,5 +90,17 @@ criarRota: async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Erro ao listar as rotas' });
     }
   },
+  /* buscar rota pelo id */
+  buscarRotaPorId: async (req: Request, res: Response) => {
+    try {
+      const rota = await Rota.findById(req.params.id);
+      if (!rota) {
+        return res.status(404).json({ error: 'Rota não encontrada' });
+      }
+      return res.status(200).json(rota);
+    } catch (error) {
+      return res.status(500).json({ error: 'Erro ao buscar a rota' });
+    }
+  }
 };
 export default rotaController;
