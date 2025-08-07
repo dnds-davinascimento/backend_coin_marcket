@@ -734,8 +734,6 @@ const venda_Schema = {
     }
   }
 
-
-
 };
 
 export default venda_Schema;
