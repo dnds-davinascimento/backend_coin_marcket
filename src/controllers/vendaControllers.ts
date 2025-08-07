@@ -325,12 +325,15 @@ const venda_Schema = {
   },
   getByOrderEmitente: async (req: Request, res: Response) => {
     try {
-      const emitente_id = req.headers['user_store_id'] as string | undefined;
+            let id_loja = req.headers.user_store_id as string;
+      if (!id_loja) {
+        id_loja = "6807ab4fbaead900af4db229"
+      }
 
 
 
 
-      const Order = await Venda.find({ "emitente._id": emitente_id }).sort({ createdAt: -1 });
+      const Order = await Venda.find({ "emitente._id": id_loja }).sort({ createdAt: -1 });
 
 
       return res.status(200).json(Order);

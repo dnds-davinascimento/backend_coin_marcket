@@ -74,12 +74,9 @@ const userController = {
  
   get_user_store: async (req: Request, res: Response): Promise<void> => {
     try {
-      const id_loja = req.headers.user_store_id as string;
-      const user_store_id = req.headers.id as string;
-
+       let id_loja = req.headers.user_store_id as string;
       if (!id_loja) {
-        res.status(400).json({ msg: "ID da loja não fornecido no cabeçalho." });
-        return;
+        id_loja = "6807ab4fbaead900af4db229"
       }
 
       // Busca a loja no banco de dados pelo ID do usuário
