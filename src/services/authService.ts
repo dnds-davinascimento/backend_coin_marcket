@@ -8,11 +8,12 @@ const getAuthToken = async (
 ): Promise<string> => {
   try {
     // Fazer a requisição GET para a autenticação, passando os parâmetros na URL
+    const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
     const response = await axios.get<{
       dados: any;
       token: string;
     }>(
-      `http://10.0.0.44:60002/auth/?serie=${serie}&codfilial=${codFilial}`
+      `${url_ideal}/auth/?serie=${serie}&codfilial=${codFilial}`
     );
 
     // O token de autenticação retornado pela API
