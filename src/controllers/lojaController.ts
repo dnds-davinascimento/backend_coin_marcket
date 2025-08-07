@@ -114,10 +114,7 @@ const lojaController = {
 
     } catch (error) {
       console.error("Erro ao criar loja:", error);
-      res.status(500).json({ 
-        msg: "Erro no servidor ao criar loja",
-        error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
-      });
+      res.status(500).json({ msg: "Erro no servidor ao criar loja"});
     }
   },
 

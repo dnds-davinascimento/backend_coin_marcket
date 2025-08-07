@@ -298,11 +298,7 @@ const venda_Schema = {
 
     } catch (error) {
 
-      return res.status(500).json({
-        success: false,
-        msg: "Erro ao processar o pedido",
-        error: error instanceof Error ? error.message : "Erro desconhecido"
-      });
+      return res.status(500).json({msg: "Erro ao processar o pedido", });
     }
   },
   getByConsumidor: async (req: Request, res: Response) => {
@@ -316,11 +312,7 @@ const venda_Schema = {
 
       return res.status(200).json(Order);
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        msg: "Erro interno ao buscar Order do consumidor",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
+      return res.status(500).json({ msg: "Erro interno ao buscar Order do consumidor",});
     }
   },
   getByOrderEmitente: async (req: Request, res: Response) => {
@@ -338,11 +330,7 @@ const venda_Schema = {
 
       return res.status(200).json(Order);
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        msg: "Erro interno ao buscar Order do consumidor",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
+      return res.status(500).json({ msg: "Erro interno ao buscar Order do consumidor", });
     }
   },
   getOrderDetails: async (req: Request, res: Response) => {
@@ -356,11 +344,7 @@ const venda_Schema = {
 
       return res.status(200).json(Order);
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        msg: "Erro interno ao buscar Order do consumidor",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
+      return res.status(500).json({ msg: "Erro interno ao buscar Order do consumidor"});
     }
   },
   getsequencia: async (req: Request, res: Response): Promise<Response> => {
@@ -373,7 +357,7 @@ const venda_Schema = {
       const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
 
       const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
-      console.log(`URL Idealsoft:", ${url_ideal} ${process.env.PRODUTION === "true" ? "" : "(Ambiente de Teste)"}`);
+      
 
       // Obter o token de autenticação para Idealsoft
       const token = await authService.getAuthToken(serie, codFilial, api);
@@ -407,11 +391,7 @@ const venda_Schema = {
       const { data: RsponseClente } = await axios.get<IdealSoftClienteResponse>(`${url_ideal}/clientes/detalhes/${codigo}`, {
         headers,
       });
-
-
-     
-
-      /* incluir dados do cliente na resposta final dentro de dados */
+/* incluir dados do cliente na resposta final dentro de dados */
 
       const responseData = {
         ...data,
@@ -548,11 +528,7 @@ const venda_Schema = {
 
     } catch (error) {
 
-      return res.status(500).json({
-        success: false,
-        msg: "Erro ao avançar o processo",
-        error: error instanceof Error ? error.message : "Erro desconhecido"
-      });
+      return res.status(500).json({ msg: "Erro ao avançar o processo" });
     }
   },
   addPaymentFor: async (req: Request, res: Response) => {
@@ -616,11 +592,7 @@ const venda_Schema = {
 
     } catch (error) {
 
-      return res.status(500).json({
-        success: false,
-        msg: "Erro ao enviar pagamento para análise",
-        error: error instanceof Error ? error.message : "Erro desconhecido"
-      });
+      return res.status(500).json({ msg: "Erro ao enviar pagamento para análise", });
     }
   },
   attachDocument: async (req: Request, res: Response) => {

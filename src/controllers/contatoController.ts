@@ -46,9 +46,7 @@ const contatoController = {
     });
   } catch (error) {
     console.error('Erro ao criar contato:', error);
-    res.status(500).json({
-      error: 'Erro interno ao criar o contato.',
-    });
+    res.status(500).json({msg: 'Erro interno ao criar o contato.'    });
   }
 
    

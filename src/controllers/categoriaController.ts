@@ -35,7 +35,7 @@ const categoriaSchema = {
       if (!nome) {
         return res.status(400).json({
           success: false,
-          message: "O campo 'nome' é obrigatório",
+          msg: "O campo 'nome' é obrigatório",
         });
       }
 
@@ -44,7 +44,7 @@ const categoriaSchema = {
       if (categoriaExistente) {
         return res.status(400).json({
           success: false,
-          message: "Já existe uma categoria com este nome",
+          msg: "Já existe uma categoria com este nome",
         });
       }
 
@@ -63,17 +63,13 @@ const categoriaSchema = {
 
       return res.status(201).json({
         success: true,
-        message: "Categoria criada com sucesso",
+        msg: "Categoria criada com sucesso",
         data: categoriaSalva,
       });
 
     } catch (error) {
 
-      return res.status(500).json({
-        success: false,
-        message: "Erro interno ao processar a criação da categoria",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
+      return res.status(500).json({msg: "Erro interno ao criar categoria",});
     }
   },
   /* pegar categorias por loja */
@@ -89,7 +85,7 @@ const categoriaSchema = {
       if (!mongoose.Types.ObjectId.isValid(lojaId)) {
         return res.status(400).json({
           success: false,
-          message: "ID de loja inválido",
+          msg: "ID de loja inválido",
         });
       }
 
@@ -100,11 +96,7 @@ const categoriaSchema = {
 
     } catch (error) {
 
-      return res.status(500).json({
-        success: false,
-        message: "Erro interno ao processar a busca de categorias",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
+      return res.status(500).json({msg: "Erro interno ao processar a busca de categorias"});
     }
   },
   /* pegar categorias por id */
@@ -116,7 +108,7 @@ const categoriaSchema = {
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({
           success: false,
-          message: "ID inválido",
+          msg: "ID inválido",
         });
       }
 
@@ -126,7 +118,7 @@ const categoriaSchema = {
       if (!categoria) {
         return res.status(404).json({
           success: false,
-          message: "Categoria não encontrada",
+          msg: "Categoria não encontrada",
         });
       }
 
@@ -134,11 +126,7 @@ const categoriaSchema = {
 
     } catch (error) {
 
-      return res.status(500).json({
-        success: false,
-        message: "Erro interno ao processar a busca de categoria",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
+      return res.status(500).json({msg: "Erro interno ao processar a busca de categoria"});
     }
   },
   /* editar por id    */
@@ -152,7 +140,7 @@ const categoriaSchema = {
       if (!categoriaExistente) {
         return res.status(404).json({
           success: false,
-          message: "Categoria não encontrada",
+          msg: "Categoria não encontrada",
         });
       }
       categoriaExistente.nome = nome || categoriaExistente.nome;
@@ -184,11 +172,7 @@ const categoriaSchema = {
 
     } catch (error) {
 
-      return res.status(500).json({
-        success: false,
-        message: "Erro interno ao processar a atualização da categoria",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
+      return res.status(500).json({ msg: "Erro interno ao processar a atualização da categoria", });
     }
   },
   /* deletar por id */
@@ -200,7 +184,7 @@ const categoriaSchema = {
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({
           success: false,
-          message: "ID inválido",
+          msg: "ID inválido",
         });
       }
 
@@ -209,7 +193,7 @@ const categoriaSchema = {
       if (!categoriaExistente) {
         return res.status(404).json({
           success: false,
-          message: "Categoria não encontrada",
+          msg: "Categoria não encontrada",
         });
       }
 
@@ -226,16 +210,12 @@ const categoriaSchema = {
 
       return res.status(200).json({
         success: true,
-        message: "Categoria deletada com sucesso",
+        msg: "Categoria deletada com sucesso",
       });
 
     } catch (error) {
 
-      return res.status(500).json({
-        success: false,
-        message: "Erro interno ao processar a deleção da categoria",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
+      return res.status(500).json({ msg: "Erro interno ao processar a exclusão da categoria"});
     }
   },
   /* definir subcategorias de categorias */
@@ -249,7 +229,7 @@ const categoriaSchema = {
       if (!categoriaPai) {
         return res.status(404).json({
           success: false,
-          message: "Categoria pai não encontrada",
+          msg: "Categoria pai não encontrada",
         });
       }
 
@@ -264,14 +244,14 @@ const categoriaSchema = {
         if (!mongoose.Types.ObjectId.isValid(categoriaId)) {
           return res.status(400).json({
             success: false,
-            message: `ID de subcategoria inválido: ${categoriaId}`,
+            msg: `ID de subcategoria inválido: ${categoriaId}`,
           });
         }
         const subcategoria = await Categoria.findById(categoriaId);
         if (!subcategoria) {
           return res.status(404).json({
             success: false,
-            message: `Subcategoria não encontrada: ${categoriaId}`,
+            msg: `Subcategoria não encontrada: ${categoriaId}`,
           });
         }
         // Adiciona a subcategoria à lista de subcategorias da categoria pai
@@ -294,7 +274,7 @@ const categoriaSchema = {
 
       return res.status(201).json({
         success: true,
-        message: "Subcategorias atualizadas com sucesso"
+        msg: "Subcategorias atualizadas com sucesso"
 
       });
 
@@ -305,11 +285,7 @@ const categoriaSchema = {
 
     } catch (error) {
 
-      return res.status(500).json({
-        success: false,
-        message: "Erro interno ao processar a atualização das subcategorias",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
+      return res.status(500).json({ msg: "Erro interno ao processar a atualização das subcategorias"});
     }
   },
   /* create categoria com shop9 */
@@ -324,7 +300,7 @@ const categoriaSchema = {
       if (!categoria_codigo) {
         return res.status(400).json({
           success: false,
-          message: "O campo 'categoria_codigo' é obrigatório",
+          msg: "O campo 'categoria_codigo' é obrigatório",
         });
       }
 
@@ -406,18 +382,14 @@ const categoriaSchema = {
       } else {
         return res.status(201).json({
           success: true,
-          message: "Já existe uma categoria com este código",
+          msg: "Já existe uma categoria com este código",
           data: categoriaExistente,
         });
       }
 
     } catch (error) {
 
-      return res.status(500).json({
-        success: false,
-        message: "Erro interno ao processar a criação da categoria",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
+      return res.status(500).json({ msg: "Erro interno ao processar a criação da categoria"});
     }
   },
   /* create subCategoria com shop9 */
@@ -431,7 +403,7 @@ const categoriaSchema = {
       if (!subcategoria_codigo) {
         return res.status(400).json({
           success: false,
-          message: "O campo 'subcategoria_codigo' é obrigatório",
+          msg: "O campo 'subcategoria_codigo' é obrigatório",
         });
       }
       // Verifica se a subcategoria já existe
@@ -493,7 +465,7 @@ const categoriaSchema = {
           if (!req.body.parient) {
             return res.status(400).json({
               success: false,
-              message: "O campo 'parient' (ID da categoria pai) é obrigatório",
+              msg: "O campo 'parient' (ID da categoria pai) é obrigatório",
             });
           }
           // verificar se o parient já esta no mongodb
@@ -501,7 +473,7 @@ const categoriaSchema = {
           if (!categoriaExistente) {
             return res.status(404).json({
               success: false,
-              message: "Categoria pai não encontrada",
+              msg: "Categoria pai não encontrada",
             });
           }
 
@@ -534,7 +506,7 @@ const categoriaSchema = {
         /* retornar a subcategoria existente */
         return res.status(201).json({
           success: true,
-          message: "Já existe uma subcategoria com este código",
+          msg: "Já existe uma subcategoria com este código",
           data: subcategoriaExistente,
         });
       }
@@ -544,11 +516,7 @@ const categoriaSchema = {
 
 
       } catch (error) {
-        return res.status(500).json({
-          success: false,
-          message: "Erro interno ao processar a criação da subcategoria",
-          error: error instanceof Error ? error.message : "Erro desconhecido",
-        });
+        return res.status(500).json({ msg: "Erro interno ao processar a criação da subcategoria"});
       }
 
 

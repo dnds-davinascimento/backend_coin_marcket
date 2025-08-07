@@ -6,10 +6,10 @@ const lgpdControllers = {
     try {
       console.log("Webhook de Store Redact recebido:", req.body);
       // Aqui, você pode implementar a lógica para remover os dados da loja.
-      res.status(200).json({ message: "Store Redact webhook recebido com sucesso" });
+      res.status(200).json({ msg: "Store Redact webhook recebido com sucesso" });
     } catch (error) {
       console.error("Erro no Webhook Store Redact:", error);
-      res.status(500).json({ message: "Erro ao processar o Store Redact webhook" });
+      res.status(500).json({ msg: "Erro ao processar o Store Redact webhook" });
     }
   },
 
@@ -18,10 +18,10 @@ const lgpdControllers = {
     try {
       console.log("Webhook de Customers Redact recebido:", req.body);
       // Aqui, você pode implementar a lógica para remover os dados dos clientes.
-      res.status(200).json({ message: "Customers Redact webhook recebido com sucesso" });
+      res.status(200).json({ msg: "Customers Redact webhook recebido com sucesso" });
     } catch (error) {
       console.error("Erro no Webhook Customers Redact:", error);
-      res.status(500).json({ message: "Erro ao processar o Customers Redact webhook" });
+      res.status(500).json({ msg: "Erro ao processar o Customers Redact webhook" });
     }
   },
 
@@ -30,10 +30,10 @@ const lgpdControllers = {
     try {
       console.log("Webhook de Customers Data Request recebido:", req.body);
       // Aqui, você pode implementar a lógica para fornecer os dados dos clientes.
-      res.status(200).json({ message: "Customers Data Request webhook recebido com sucesso" });
+      res.status(200).json({ msg: "Customers Data Request webhook recebido com sucesso" });
     } catch (error) {
       console.error("Erro no Webhook Customers Data Request:", error);
-      res.status(500).json({ message: "Erro ao processar o Customers Data Request webhook" });
+      res.status(500).json({ msg: "Erro ao processar o Customers Data Request webhook" });
     }
   },
 };

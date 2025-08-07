@@ -12,7 +12,7 @@ const cartController = {
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({
           success: false,
-          message: "ID de carrinho inválido",
+          msg: "ID de carrinho inválido",
         });
       }
 
@@ -22,7 +22,7 @@ const cartController = {
       if (!carrinho) {
         return res.status(404).json({
           success: false,
-          message: "Carrinho não encontrado",
+          msg: "Carrinho não encontrado",
         });
       }
 
@@ -31,11 +31,7 @@ const cartController = {
         data: carrinho,
       });
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: "Erro interno ao buscar carrinho",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
+      return res.status(500).json({msg : "Erro interno ao buscar carrinho",});
     }
   },
 
@@ -51,11 +47,7 @@ const cartController = {
         data: carrinhos,
       });
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: "Erro interno ao buscar carrinhos do emitente",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
+      return res.status(500).json({msg : "Erro interno ao buscar carrinhos do emitente",});
     }
   },
 
@@ -73,10 +65,7 @@ const cartController = {
       
       return res.status(200).json(carrinhos);
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: "Erro interno ao buscar carrinhos do consumidor",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
+      return res.status(500).json({msg: "Erro interno ao buscar carrinhos do consumidor",
       });
     }
   },
@@ -89,7 +78,7 @@ const cartController = {
     if (!custumer_id) {
       return res.status(400).json({
         success: false,
-        message: "ID do cliente é obrigatório",
+        msg: "ID do cliente é obrigatório",
       });
     }
 
@@ -138,7 +127,7 @@ const cartController = {
       if (estoqueAtual < 1) {
         return res.status(400).json({
           success: false,
-          message: "Estoque insuficiente"
+          msg: "Estoque insuficiente"
         });
       }
 
@@ -165,7 +154,7 @@ const cartController = {
 
       return res.status(201).json({
         success: true,
-        message: "Novo carrinho criado e produto adicionado",
+        msg: "Novo carrinho criado e produto adicionado",
         data: carrinhoSalvo
       });
     } else {
@@ -178,7 +167,7 @@ const cartController = {
         if (quantidadeAtual + 1 > estoqueAtual) {
           return res.status(400).json({
             success: false,
-            message: "Quantidade excede o estoque disponível"
+            msg: "Quantidade excede o estoque disponível"
           });
         }
 
@@ -191,7 +180,7 @@ const cartController = {
         if (estoqueAtual < 1) {
           return res.status(400).json({
             success: false,
-            message: "Estoque insuficiente"
+            msg: "Estoque insuficiente"
           });
         }
 
@@ -210,7 +199,7 @@ const cartController = {
 
       return res.status(200).json({
         success: true,
-        message: "Produto adicionado ao carrinho existente",
+        msg: "Produto adicionado ao carrinho existente",
         data: carrinhoAtivo
       });
     }
@@ -219,7 +208,7 @@ const cartController = {
     console.error("Erro ao adicionar produto:", error);
     return res.status(500).json({
       success: false,
-      message: "Erro ao adicionar produto ao carrinho"
+      msg: "Erro ao adicionar produto ao carrinho"
     });
   }
 },
@@ -235,7 +224,7 @@ const cartController = {
       if (!custumer_id) {
         return res.status(400).json({
           success: false,
-          message: "ID do cliente é obrigatório",
+          msg: "ID do cliente é obrigatório",
         });
       }
 
@@ -248,7 +237,7 @@ const cartController = {
       if (!carrinhoAtivo) {
         return res.status(404).json({ 
           success: false,
-          message: "Carrinho ativo não encontrado para este cliente" 
+          msg: "Carrinho ativo não encontrado para este cliente" 
         });
       }
 
@@ -260,7 +249,7 @@ const cartController = {
       if (produtoIndex === -1) {
         return res.status(404).json({ 
           success: false,
-          message: "Produto não encontrado no carrinho" 
+          msg: "Produto não encontrado no carrinho" 
         });
       }
 
@@ -302,7 +291,7 @@ const cartController = {
       
       return res.status(200).json({
         success: true,
-        message: "Produto removido do carrinho com sucesso",
+        msg: "Produto removido do carrinho com sucesso",
         data: {
           carrinho: carrinhoAtualizado,
           produtoRemovido: produtoRemovido
@@ -310,11 +299,7 @@ const cartController = {
       });
     } catch (error) {
       console.error("Erro ao remover produto:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Erro interno ao remover produto do carrinho",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
+      return res.status(500).json({ msg: "Erro interno ao remover produto do carrinho",});
     }
   },
   increaseProductQuantity: async (req: Request, res: Response) => {
@@ -325,7 +310,7 @@ const cartController = {
       if (!custumer_id) {
         return res.status(400).json({
           success: false,
-          message: "ID do cliente é obrigatório",
+          msg: "ID do cliente é obrigatório",
         });
       }
 
@@ -338,7 +323,7 @@ const cartController = {
       if (!carrinhoAtivo) {
         return res.status(404).json({ 
           success: false,
-          message: "Carrinho ativo não encontrado" 
+          msg: "Carrinho ativo não encontrado" 
         });
       }
 
@@ -350,7 +335,7 @@ const cartController = {
       if (produtoIndex === -1) {
         return res.status(404).json({ 
           success: false,
-          message: "Produto não encontrado no carrinho" 
+          msg: "Produto não encontrado no carrinho" 
         });
       }
 
@@ -385,16 +370,12 @@ const cartController = {
       
       return res.status(200).json({
         success: true,
-        message: "Quantidade do produto aumentada com sucesso",
+        msg: "Quantidade do produto aumentada com sucesso",
         data: carrinhoAtualizado
       });
     } catch (error) {
       console.error("Erro ao aumentar quantidade:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Erro interno ao aumentar quantidade do produto",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
+      return res.status(500).json({msg: "Erro interno ao aumentar quantidade do produto",});
     }
   },
   decreaseProductQuantity: async (req: Request, res: Response) => {
@@ -405,7 +386,7 @@ const cartController = {
       if (!custumer_id) {
         return res.status(400).json({
           success: false,
-          message: "ID do cliente é obrigatório",
+          msg: "ID do cliente é obrigatório",
         });
       }
 
@@ -418,7 +399,7 @@ const cartController = {
       if (!carrinhoAtivo) {
         return res.status(404).json({ 
           success: false,
-          message: "Carrinho ativo não encontrado" 
+          msg: "Carrinho ativo não encontrado" 
         });
       }
 
@@ -430,7 +411,7 @@ const cartController = {
       if (produtoIndex === -1) {
         return res.status(404).json({ 
           success: false,
-          message: "Produto não encontrado no carrinho" 
+          msg: "Produto não encontrado no carrinho" 
         });
       }
 
@@ -438,7 +419,7 @@ const cartController = {
       if (carrinhoAtivo.produtos[produtoIndex].quantidade <= 1) {
         return res.status(400).json({
           success: false,
-          message: "Quantidade mínima já atingida (1 unidade)",
+          msg: "Quantidade mínima já atingida (1 unidade)",
           data: carrinhoAtivo
         });
       }
@@ -474,16 +455,12 @@ const cartController = {
       
       return res.status(200).json({
         success: true,
-        message: "Quantidade do produto diminuída com sucesso",
+        msg: "Quantidade do produto diminuída com sucesso",
         data: carrinhoAtualizado
       });
     } catch (error) {
       console.error("Erro ao diminuir quantidade:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Erro interno ao diminuir quantidade do produto",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
+      return res.status(500).json({ msg: "Erro interno ao diminuir quantidade do produto",});
     }
   },
 };

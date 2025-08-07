@@ -419,7 +419,7 @@ const produto_Schema = {
       res.status(201).json(produto);
     } catch (error) {
 
-      res.status(500).json({ message: "Erro ao criar produto" });
+      res.status(500).json({ msg: "Erro ao criar produto" });
     }
   },
   /* buscar produtos por loja*/
@@ -477,7 +477,7 @@ const produto_Schema = {
       return res.status(200).json(produtos);
     } catch (error) {
       console.error("Erro ao buscar produtos:", error);
-      return res.status(500).json({ message: "Erro ao buscar produtos" });
+      return res.status(500).json({ msg: "Erro ao buscar produtos" });
     }
   },
   /* buscar produtos por id*/
@@ -492,7 +492,7 @@ const produto_Schema = {
       res.status(200).json(produto);
     } catch (error) {
 
-      res.status(500).json({ message: "Erro ao buscar produto" });
+      res.status(500).json({ msg: "Erro ao buscar produto" });
     }
   },
   /* deletar produto por id*/
@@ -507,7 +507,7 @@ const produto_Schema = {
       res.status(200).json({ msg: "Produto deletado com sucesso." });
     } catch (error) {
 
-      res.status(500).json({ message: "Erro ao deletar produto" });
+      res.status(500).json({ msg: "Erro ao deletar produto" });
     }
   },
   /* atualizar produto por id*/
@@ -624,7 +624,7 @@ if (tabelas_precos && tabelas_precos.length > 0) {
       res.status(200).json(produto);
     } catch (error) {
 
-      res.status(500).json({ message: "Erro ao atualizar produto" });
+      res.status(500).json({ msg: "Erro ao atualizar produto" });
     }
   },
   sincProducts: async (req: Request, res: Response): Promise<void> => {
@@ -992,11 +992,11 @@ if (tabelas_precos && tabelas_precos.length > 0) {
 
       } catch (error: any) {
         console.log(error);
-        results.push({ error: error.message }); // Registra o erro no array de resultados
+        results.push({ error: error.msg }); // Registra o erro no array de resultados
       }
       // Retornar os resultados
       res.status(200).json({
-        message: "Produtos processados com sucesso",
+        msg: "Produtos processados com sucesso",
         results: results,
       });
 
@@ -1269,7 +1269,7 @@ if (tabelas_precos && tabelas_precos.length > 0) {
       }
       res.status(200).json(produto);
     } catch (error) {
-      res.status(500).json({ message: "Erro ao buscar produto" });
+      res.status(500).json({ msg: "Erro ao buscar produto" });
     } 
   },
   sincronizarPrecosShop9MongoDB: async (

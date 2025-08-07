@@ -148,7 +148,13 @@ createEntrega: async (req: Request, res: Response): Promise<void> => {
     
 
     if (!dados || !dados.endereco_entrega) {
-      res.status(400).json({ message: "Dados de entrega inválidos" });
+      res.status(400).json({ msg: "Dados de entrega inválidos" });
+      return;
+    }
+    /* verificar se já não existe uma entrega com a mesma sequencia */
+    const sequenciaExistente = await Entrega.findOne({ sequencia: dados.sequencia });
+    if (sequenciaExistente) {
+      res.status(400).json({ msg: "Já existe uma entrega com essa sequência" });
       return;
     }
     // Verifica o ultimo número da entrega já existe  exemplo: 0001, 0002, 0003
@@ -177,10 +183,10 @@ createEntrega: async (req: Request, res: Response): Promise<void> => {
     });
 
     const saved = await novaEntrega.save();
-    res.status(201).json({ message: "Entrega criada com sucesso", entrega: saved,sucesso: true });
+    res.status(201).json({ msg: "Entrega criada com sucesso", entrega: saved,sucesso: true });
   } catch (error) {
     
-    res.status(500).json({ message: "Erro ao criar entrega" });
+    res.status(500).json({ msg: "Erro ao criar entrega" });
   }
 },
 /* buscar entregas */
@@ -193,7 +199,7 @@ getEntregas: async (req: Request, res: Response): Promise<void> => {
     res.status(200).json(entregas);
   } catch (error) {
     
-    res.status(500).json({ message: "Erro ao buscar entregas" });
+    res.status(500).json({ msg: "Erro ao buscar entregas" });
   }
 },
 /* função para buscar entregas com status de pedente  */
@@ -204,7 +210,7 @@ getEntregasPendentes: async (req: Request, res: Response): Promise<void> => {
     res.status(200).json(entregasPendentes);
   } catch (error) {
    
-    res.status(500).json({ message: "Erro ao buscar entregas pendentes" });
+    res.status(500).json({ msg: "Erro ao buscar entregas pendentes" });
   }
 },
 getEntregasDetails: async (req: Request, res: Response): Promise<void> => {
@@ -214,14 +220,14 @@ getEntregasDetails: async (req: Request, res: Response): Promise<void> => {
     const entrega = await Entrega.findById(id);
 
     if (!entrega) {
-      res.status(404).json({ message: "Entrega não encontrada" });
+      res.status(404).json({ msg: "Entrega não encontrada" });
       return;
     }
 
     res.status(200).json(entrega);
   } catch (error) {
     
-    res.status(500).json({ message: "Erro ao buscar detalhes da entrega" });
+    res.status(500).json({ msg: "Erro ao buscar detalhes da entrega" });
   }
 }
 

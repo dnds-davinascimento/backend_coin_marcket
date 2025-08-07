@@ -230,7 +230,7 @@ const customerController = {
       console.error("Erro ao criar cliente:", error);
       res.status(500).json({
         msg: "Erro no servidor ao criar cliente",
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: process.env.NODE_ENV === 'development' ? error.msg : undefined
       });
     }
   },

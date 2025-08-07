@@ -106,7 +106,7 @@ const userController = {
       res.status(200).json(motoristas);
     } catch (error) {
       console.error("Erro ao buscar motoristas:", error);
-      res.status(500).json({ message: "Erro ao buscar motoristas" });
+      res.status(500).json({ msg: "Erro ao buscar motoristas" });
     }
   },
   UserById: async (req: Request, res: Response): Promise<void> => {

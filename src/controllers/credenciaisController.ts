@@ -65,9 +65,11 @@ const credenciaisController = {
     // Listar todas as credenciais
     listCredenciais: async (req: Request, res: Response): Promise<void> => {
         try {
-            const credencial_loja_id = req.headers.user_store_id;
-        // Listar todas as credenciais
-        const credenciaisList = await credenciais.find({ credencial_loja_id });
+         let id_loja = req.headers.user_store_id as string;
+      if (!id_loja) {
+        id_loja = "6807ab4fbaead900af4db229"
+      }
+        const credenciaisList = await credenciais.find({ credencial_loja_id:id_loja });
         res.status(200).json({ credenciais: credenciaisList });
         } catch (error) {
         console.log(error);

@@ -50,7 +50,7 @@ const documentController = {
         doc = await DocumentCustomerModel.create(dataToSave);
       }
 
-      res.status(200).json({ message: 'Documentos salvos com sucesso!', document: doc });
+      res.status(200).json({ msg: 'Documentos salvos com sucesso!', document: doc });
 
     } catch (error) {
       console.error('Erro ao salvar documentos:', error);
