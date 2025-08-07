@@ -370,6 +370,7 @@ const venda_Schema = {
       const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
 
       const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
+      console.log(`URL Idealsoft:", ${url_ideal} ${process.env.PRODUTION === "true" ? "" : "(Ambiente de Teste)"}`);
 
       // Obter o token de autenticação para Idealsoft
       const token = await authService.getAuthToken(serie, codFilial, api);
