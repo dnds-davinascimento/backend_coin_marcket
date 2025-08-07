@@ -49,6 +49,8 @@ const userController = {
     order: { view: false, create: false, edit: false, delete: false },
     delivery: { view: false, create: false, edit: false, delete: false },
     route: { view: false, create: false, edit: false, delete: false },
+    client: { view: false, create: false, edit: false, delete: false },
+    
         },
       });
 

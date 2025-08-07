@@ -256,7 +256,7 @@ router.route("/get_user_store").get(
 
 router.route("/UserById/:id").get(
   checkToken,
-  permissionsMiddleware('user'), 
+ /*  permissionsMiddleware('user'),  */
   (req: Request, res: Response) => userController.UserById(req, res)
 );
 /**

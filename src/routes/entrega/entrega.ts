@@ -6,16 +6,23 @@ const router: Router = Router();
 
 
 router.route("/createEntrega").post(
-
+     checkToken,
+  permissionsMiddleware('delivery'), 
     (req: Request, res: Response) => entregaController.createEntrega(req, res)
   );
 router.route("/getEntregas").get(
+       checkToken,
+  permissionsMiddleware('delivery'), 
     (req: Request, res: Response) => entregaController.getEntregas(req, res)
   );
 router.route("/getEntregasDetails/:id").get(
+       checkToken,
+  permissionsMiddleware('delivery'), 
     (req: Request, res: Response) => entregaController.getEntregasDetails(req, res)
   );
 router.route("/getEntregasPendentes").get(
+       checkToken,
+  permissionsMiddleware('delivery'), 
     (req: Request, res: Response) => entregaController.getEntregasPendentes(req, res)
   );
 

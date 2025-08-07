@@ -61,28 +61,28 @@ const router: Router = Router();
  */
 
 router.route("/addProduto").post(
-      checkToken,
-  permissionsMiddleware('cart'),
+    checkToken,
+    /* permissionsMiddleware('cart'), */
     (req: Request, res: Response) => cartControllers.addProduto(req, res)
   );
 router.route("/getByConsumidor").get(
     checkToken,
-  permissionsMiddleware('cart'),
+  /* permissionsMiddleware('cart'), */
     (req: Request, res: Response) => cartControllers.getByConsumidor(req, res)
   );
 router.route("/RemoveProductFromCart").put(
     checkToken,
-  permissionsMiddleware('cart'),
+  /* permissionsMiddleware('cart'), */
     (req: Request, res: Response) => cartControllers.RemoveProductFromCart(req, res)
   );
 router.route("/decreaseProductQuantity").put(
     checkToken,
-  permissionsMiddleware('cart'),
+  /* permissionsMiddleware('cart'), */
     (req: Request, res: Response) => cartControllers.decreaseProductQuantity(req, res)
   );
 router.route("/increaseProductQuantity").put(
     checkToken,
-  permissionsMiddleware('cart'),
+  /* permissionsMiddleware('cart'), */
     (req: Request, res: Response) => cartControllers.increaseProductQuantity(req, res)
   );
 

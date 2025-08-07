@@ -5,15 +5,18 @@ const router: Router = Router();
 
 
 router.route("/criarRota").post(
-
+  checkToken,
+  permissionsMiddleware('route'), 
     (req: Request, res: Response) => rotaController.criarRota(req, res)
   );
 router.route("/listarRotas").get(
-
+    checkToken,
+  permissionsMiddleware('route'),
     (req: Request, res: Response) => rotaController.listarRotas(req, res)
   );
 router.route("/buscarRotaPorId/:id").get(
-
+  checkToken,
+  permissionsMiddleware('route'),
     (req: Request, res: Response) => rotaController.buscarRotaPorId(req, res)
   );
 

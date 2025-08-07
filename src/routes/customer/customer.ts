@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import customerControllers from "../../controllers/customerController";  // Controller de clientes
-
+import { checkToken, permissionsMiddleware } from '../../middlewares/checkToken'; 
 const router: Router = Router();
 
 
@@ -61,12 +61,18 @@ const router: Router = Router();
  */
 
 router.route("/registerCustomer").post(
+       checkToken,
+
     (req: Request, res: Response) => customerControllers.createCustomer(req, res)
   );
 router.route("/approveCustomerStatus/:id").post(
+         checkToken,
+  permissionsMiddleware('client'), 
     (req: Request, res: Response) => customerControllers.approveCustomerStatus(req, res)
   );
 router.route("/updateCustomer/:id").put(
+         checkToken,
+ /*  permissionsMiddleware('client'),  */
     (req: Request, res: Response) => customerControllers.updateCustomer(req, res)
   );
 /**
@@ -129,9 +135,13 @@ router.route("/getCustomerById/:id").get(
     (req: Request, res: Response) => customerControllers.getCustomerById(req, res)
   );
 router.route("/getCustomersByStore").get(
+         checkToken,
+  permissionsMiddleware('client'), 
     (req: Request, res: Response) => customerControllers.getCustomersByStore(req, res)
   );
 router.route("/deleteCustomer/:id").delete(
+         checkToken,
+  permissionsMiddleware('client'), 
     (req: Request, res: Response) => customerControllers.deleteCustomer(req, res)
   );
 
