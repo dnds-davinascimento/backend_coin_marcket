@@ -17,7 +17,7 @@ export interface IRota extends Document  {
     link_da_Rota_maps?: string;
     data: Date;
     entregas: {
-        id: string;
+        _id: string;
         orden_de_entrega: number;
         nome: string;
         email?: string;
@@ -53,7 +53,7 @@ const rotaSchema = new Schema<IRota>({
     numero: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
     entregas: [{
-        id: { type: String, required: true },
+        _id: { type: String, required: true },
         orden_de_entrega: { type: Number, required: true },
         numero_nf: { type: String, required: true },
         sequencia: { type: Number, required: true },

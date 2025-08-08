@@ -19,6 +19,11 @@ router.route("/buscarRotaPorId/:id").get(
   permissionsMiddleware('route'),
     (req: Request, res: Response) => rotaController.buscarRotaPorId(req, res)
   );
+router.route("/confirmarEntregas/:id").put(
+  checkToken,
+  permissionsMiddleware('route'),
+    (req: Request, res: Response) => rotaController.updateStatusEntregaNaRota(req, res)
+  );
 
 
 export default router;

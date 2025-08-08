@@ -233,7 +233,9 @@ getEntregasDetails: async (req: Request, res: Response): Promise<void> => {
     
     res.status(500).json({ msg: "Erro ao buscar detalhes da entrega" });
   }
-}
+},
+/* função para confimar o status da entrega como "entregue" pelo id */
+
 
 
 
