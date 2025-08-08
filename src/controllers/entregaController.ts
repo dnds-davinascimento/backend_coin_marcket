@@ -144,6 +144,7 @@ const entregaController = {
 createEntrega: async (req: Request, res: Response): Promise<void> => {
   try {
     const dados= req.body;
+    
    
     
 
@@ -178,7 +179,10 @@ createEntrega: async (req: Request, res: Response): Promise<void> => {
       status_entrega: 'pendente',
       data_entrega: dados.data_entrega || null,
       data_confirmacao_cliente: dados.data_confirmacao_cliente || null,
-
+      observacoes:dados.observacoes || [],
+     // novos campos
+      levarMaquina: typeof dados.levarMaquina === "boolean" ? dados.levarMaquina : false,
+      parcelas: typeof dados.parcelas === "number" ? dados.parcelas : 1,
       historico:dados.historico || [],
     });
 

@@ -57,6 +57,8 @@ interface IEntrega extends Document {
   anexos?: IEntregaAnexo[];
   historico: IEntregaHistorico[];
   observacoes?: IObservacao[];
+  levarMaquina: boolean;  // <-- novo
+  parcelas: number;       // <-- novo
   createdAt: Date;
   updatedAt: Date;
 }
@@ -117,6 +119,8 @@ const entregaSchema = new Schema<IEntrega>(
         texto: { type: String, required: true },
       },
     ],
+    levarMaquina: { type: Boolean, required: true, default: false }, // novo
+    parcelas: { type: Number, required: true, default: 1 },          // novo
   },
   { timestamps: true }
 );
