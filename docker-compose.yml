@@ -4,9 +4,6 @@ services:
     ports:
       - '4000:4000'
     restart: always
-    volumes:
-      - .:/app
-      - /app/node_modules
     environment:
       NODE_ENV: production
       PORT: ${PORT}
@@ -21,6 +18,4 @@ services:
       EMAIL: ${EMAIL}
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
       PRODUTION: ${PRODUTION}
-
-    command: nodemon --watch src --exec ts-node ./index.ts # Usando o Nodemon para desenvolvimento local
-
+    command: node ./dist/index.js

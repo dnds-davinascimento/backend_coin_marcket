@@ -44,21 +44,13 @@ jobs:
             if ! command -v docker-compose &> /dev/null
             then
               echo "Docker Compose não encontrado. Instalando..."
-              sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
+
             else
               echo "Docker Compose já está instalado."
             fi
-
-            # Verificar se o Node.js está instalado
-            if ! command -v npm &> /dev/null
-            then
-              echo "npm não encontrado. Instalando Node.js..."
-              sudo apt-get install -y nodejs npm
-            else
-              echo "npm já está instalado."
-            fi
-
+        
             # Defina o caminho do seu diretório de projeto na EC2
             PROJECT_DIR="/home/ubuntu/backend_croi_distribuidora"
 
@@ -76,11 +68,6 @@ jobs:
 
             # Navegar até o diretório do projeto
             cd $PROJECT_DIR || exit
-
-          
-            # Instalar as dependências do projeto (caso não tenha feito ainda)
-            echo "Instalando dependências..."
-            npm install
 
             # Verificar se o arquivo docker-compose.yml existe
             if [ ! -f "docker-compose.yml" ]; then

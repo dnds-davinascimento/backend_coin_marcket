@@ -1,23 +1,29 @@
-# Usar a imagem base do Node.js v20
-FROM node:20
+# Build stage
+FROM node:20 AS build
 
-# Criar o diretório de trabalho dentro do container
 WORKDIR /app
 
-# Copiar o package.json e o package-lock.json
 COPY package*.json ./
 
-# Instalar dependências
 RUN npm install
 
-# Instalar dependências globais como ts-node e nodemon
-RUN npm install -g ts-node nodemon
-
-# Copiar o código da aplicação
 COPY . .
 
-# Expor a porta que o Node.js vai rodar
+# Transpila TS para JS
+RUN npm run build
+
+# Production stage
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install --only=production
+
+# Copia só o código compilado da build stage
+COPY --from=build /app/dist ./dist
+
 EXPOSE 4000
 
-# Comando para rodar o nodemon com ts-node
-CMD ["npm", "run", "dev"]
+CMD ["node", "dist/index.js"]
