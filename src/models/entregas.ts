@@ -85,8 +85,8 @@ const entregaSchema = new Schema<IEntrega>(
       nome: { type: String, required: true },
     },
     responsavelPorReceber: {
-      nome: { type: String, required: true },
-      telefone: { type: String, required: true },
+      nome: { type: String, required: false },
+      telefone: { type: String, required: false },
      
     },
     endereco_entrega: {
