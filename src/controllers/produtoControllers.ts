@@ -1408,17 +1408,9 @@ if (precoAtualizado) {
       const tempoTotal = (fimSincronizacao - inicioSincronizacao) / 1000; // em segundos
       console.log(`Tempo total de sincronização: ${tempoTotal} segundos`);
 
-
-
-
-
-
-
     } catch (error) {
       console.log(error);
-      res
-        .status(500)
-        .json({ msg: "Erro no servidor, tente novamente mais tarde." });
+      console.error("Erro na sincronização de preços:", error);
     }
   },
   sincronizarEstoqueShop9MongoDB: async (
@@ -1503,12 +1495,10 @@ if (precoAtualizado) {
       // Calcular o tempo total de sincronização
       const fimSincronizacao = Date.now();
       const tempoTotal = (fimSincronizacao - inicioSincronizacao) / 1000; // em segundos
-      
+       console.log(`Tempo total de sincronização: ${tempoTotal} segundos`);
     } catch (error) {
       
-      res
-        .status(500)
-        .json({ msg: "Erro no servidor, tente novamente mais tarde." });
+       console.error("Erro na sincronização de preços:", error);
     }
   }
 

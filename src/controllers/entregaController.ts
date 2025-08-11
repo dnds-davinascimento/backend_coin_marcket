@@ -191,7 +191,7 @@ createEntrega: async (req: Request, res: Response): Promise<void> => {
     const saved = await novaEntrega.save();
     res.status(201).json({ msg: "Entrega criada com sucesso", entrega: saved,sucesso: true });
   } catch (error) {
-    console.log(error)
+ 
     
     res.status(500).json({ msg: "Erro ao criar entrega" });
   }
