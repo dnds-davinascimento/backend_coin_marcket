@@ -851,8 +851,10 @@ if (tabelas_precos && tabelas_precos.length > 0) {
     res: Response
   ): Promise<void> => {
     try {
-      const id_loja = req.headers.user_store_id as string;
-      const user_store_id = req.headers.id as string;
+            let id_loja = req.headers.user_store_id as string;
+      if (!id_loja) {
+        id_loja = "6807ab4fbaead900af4db229"
+      }
 
 
 
@@ -1010,8 +1012,10 @@ if (tabelas_precos && tabelas_precos.length > 0) {
   },
   sinc_img_Product: async (req: Request, res: Response): Promise<void> => {
     try {
-      const id_loja = req.headers.user_store_id as string;
-      const user_store_id = req.headers.id as string;
+               let id_loja = req.headers.user_store_id as string;
+      if (!id_loja) {
+        id_loja = "6807ab4fbaead900af4db229"
+      }
       const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
       const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
       // Obter o token de autenticação para Idealsoft
@@ -1128,8 +1132,10 @@ if (tabelas_precos && tabelas_precos.length > 0) {
   ): Promise<void> => {
     try {
       // Pegar o admin com id
-      const id_loja = req.headers.user_store_id as string;
-      const user_store_id = req.headers.id as string;
+            let id_loja = req.headers.user_store_id as string;
+      if (!id_loja) {
+        id_loja = "6807ab4fbaead900af4db229"
+      }
 
 
       // Obter credenciais usando o serviço
@@ -1279,7 +1285,10 @@ if (tabelas_precos && tabelas_precos.length > 0) {
     try {
       res.status(200).json({ msg: "Sincronização de preços iniciada, aguarde um e-mail para verificar as mudanças." });
       console.log("Sincronização de preços iniciada.");
-      const id_loja = req.headers.user_store_id as string;
+      let id_loja = req.headers.user_store_id as string;
+      if (!id_loja) {
+        id_loja = "6807ab4fbaead900af4db229"
+      }
       
       // Obter as credenciais do usuário
       const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
@@ -1420,12 +1429,14 @@ if (precoAtualizado) {
     try {
       res.status(200).json({ msg: "Sincronização de estoque iniciada, aguarde um e-mail para verificar as mudanças." });
       console.log("Sincronização de estoque iniciada.");
-        const id_loja = req.headers.user_store_id as string;
-      const user_store_id = req.headers.id as string;
+            let id_loja = req.headers.user_store_id as string;
+      if (!id_loja) {
+        id_loja = "6807ab4fbaead900af4db229"
+      }
       
       
-      // Obter as credenciais do usuário
-      const { serie, api, codFilial, senha } = await obterCredenciais(id_loja || user_store_id);
+       // Obter credenciais usando o serviço
+      const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
       
       const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
       // Obter o token de autenticação para Idealsoft
