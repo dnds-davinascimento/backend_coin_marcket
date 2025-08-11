@@ -175,6 +175,7 @@ createEntrega: async (req: Request, res: Response): Promise<void> => {
       tipo_Selecionado: dados.tipo_Selecionado,
       filial: dados.filial ,
       vendedor: dados.vendedor ,
+      responsavelPorReceber:dados.responsavelPorReceber,
       endereco_entrega: dados.endereco_entrega,
       status_entrega: 'pendente',
       data_entrega: dados.data_entrega || null,
@@ -184,6 +185,7 @@ createEntrega: async (req: Request, res: Response): Promise<void> => {
       levarMaquina: typeof dados.levarMaquina === "boolean" ? dados.levarMaquina : false,
       parcelas: typeof dados.parcelas === "number" ? dados.parcelas : 1,
       historico:dados.historico || [],
+
     });
 
     const saved = await novaEntrega.save();

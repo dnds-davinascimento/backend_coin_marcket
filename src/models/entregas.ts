@@ -43,6 +43,10 @@ interface IEntrega extends Document {
     id: string;
     nome: string;
   };
+  responsavelPorReceber: {
+    nome: string;
+    telefone: string;
+  };
   endereco_entrega: {
     logradouro: string;
     numero: string;
@@ -79,6 +83,11 @@ const entregaSchema = new Schema<IEntrega>(
     vendedor: {
       id: { type: String, required: true },
       nome: { type: String, required: true },
+    },
+    responsavelPorReceber: {
+      nome: { type: String, required: true },
+      telefone: { type: String, required: true },
+     
     },
     endereco_entrega: {
       logradouro: { type: String, required: true },
