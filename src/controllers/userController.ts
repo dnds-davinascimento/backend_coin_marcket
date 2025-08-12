@@ -10,7 +10,10 @@ dotenv.config(); // Carregar as variáveis de ambiente
 const userController = {
   // Registrar um novo usuário (admin ou padrão)
   registerUser: async (req: Request, res: Response): Promise<void> => {
-    const id_loja = req.headers.user_store_id as string;
+             let id_loja = req.headers.user_store_id as string;
+      if (!id_loja) {
+        id_loja = "6807ab4fbaead900af4db229"
+      }
   
     
     
