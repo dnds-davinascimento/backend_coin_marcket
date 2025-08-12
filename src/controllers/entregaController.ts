@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Entrega } from "../models/entregas";
-import { link } from "fs";
+import User from "../models/user";
 
 export interface DadosOrdemVenda {
   ordem: number;
@@ -201,6 +201,7 @@ getEntregas: async (req: Request, res: Response): Promise<void> => {
   try {
     const typeUser = req.headers.typeuser as string;
     const userId = req.headers.userid as string;
+
     if (!typeUser || !userId) {
       res.status(400).json({ msg: "Tipo de usuário ou ID do usuário não fornecido" });
       return;
@@ -213,17 +214,38 @@ getEntregas: async (req: Request, res: Response): Promise<void> => {
       entregas = await Entrega.find()
         .select("sequencia consumidor_nome numero_nf status_entrega data_entrega createdAt")
         .sort({ createdAt: -1 });
+
     } else if (typeUser === "user") {
-      // User vê só as dele
-      entregas = await Entrega.find({ "vendedor.id": userId })
-        .select("sequencia consumidor_nome numero_nf status_entrega data_entrega createdAt")
-        .sort({ createdAt: -1 });
+      // Buscar o cargo do usuário
+      const user = await User.findById(userId).select("cargo");
+      if (!user) {
+        res.status(404).json({ msg: "Usuário não encontrado" });
+        return ;
+      }
+
+      if (user.cargo === "Supervisor de Logística") {
+        // Supervisor vê tudo
+        entregas = await Entrega.find()
+          .select("sequencia consumidor_nome numero_nf status_entrega data_entrega createdAt")
+          .sort({ createdAt: -1 });
+      } else if (user.cargo === "Vendedor") {
+        // Vendedor vê só as dele
+        entregas = await Entrega.find({ "vendedor.id": userId })
+          .select("sequencia consumidor_nome numero_nf status_entrega data_entrega createdAt")
+          .sort({ createdAt: -1 });
+      } else {
+       res.status(403).json({ msg: "Cargo não autorizado" });
+        return ;
+      }
+
     } else {
-    res.status(403).json({ msg: "Tipo de usuário inválido" });
+      res.status(403).json({ msg: "Tipo de usuário inválido" });
+      return;
     }
 
     res.status(200).json(entregas);
   } catch (error) {
+    console.error("Erro ao buscar entregas:", error);
     res.status(500).json({ msg: "Erro ao buscar entregas" });
   }
 },
