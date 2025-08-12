@@ -199,16 +199,35 @@ createEntrega: async (req: Request, res: Response): Promise<void> => {
 /* buscar entregas */
 getEntregas: async (req: Request, res: Response): Promise<void> => {
   try {
-    const entregas = await Entrega.find().select(
-      'sequencia consumidor_nome numero_nf status_entrega data_entrega createdAt'
-    ).sort({ createdAt: -1 }); // opcional: ordena da mais recente pra mais antiga
+    const typeUser = req.headers.typeuser as string;
+    const userId = req.headers.userid as string;
+    if (!typeUser || !userId) {
+      res.status(400).json({ msg: "Tipo de usuário ou ID do usuário não fornecido" });
+      return;
+    }
+
+    let entregas;
+
+    if (typeUser === "admin") {
+      // Admin vê tudo
+      entregas = await Entrega.find()
+        .select("sequencia consumidor_nome numero_nf status_entrega data_entrega createdAt")
+        .sort({ createdAt: -1 });
+    } else if (typeUser === "user") {
+      // User vê só as dele
+      entregas = await Entrega.find({ "vendedor.id": userId })
+        .select("sequencia consumidor_nome numero_nf status_entrega data_entrega createdAt")
+        .sort({ createdAt: -1 });
+    } else {
+    res.status(403).json({ msg: "Tipo de usuário inválido" });
+    }
 
     res.status(200).json(entregas);
   } catch (error) {
-    
     res.status(500).json({ msg: "Erro ao buscar entregas" });
   }
 },
+
 /* função para buscar entregas com status de pedente  */
 getEntregasPendentes: async (req: Request, res: Response): Promise<void> => {
   try {
