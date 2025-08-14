@@ -342,6 +342,11 @@ router.route("/edit_user_shofusion/:id").put(
   permissionsMiddleware('user'), 
   (req: Request, res: Response) => userController.editUserById(req, res)
 );
+router.route("/editOwnUser/:id").put(
+  checkToken,
+ /*  permissionsMiddleware('user'),  */
+  (req: Request, res: Response) => userController.editOwnUser(req, res)
+);
 /**
  * @swagger
  * /delete_user/{id}:

@@ -155,6 +155,7 @@ createEntrega: async (req: Request, res: Response): Promise<void> => {
     /* verificar se já não existe uma entrega com a mesma sequencia */
     const sequenciaExistente = await Entrega.findOne({ sequencia: dados.sequencia });
     if (sequenciaExistente) {
+      console.log("Sequência já existe:", dados.sequencia);
       res.status(400).json({ msg: "Já existe uma entrega com essa sequência" });
       return;
     }
@@ -249,7 +250,6 @@ getEntregas: async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ msg: "Erro ao buscar entregas" });
   }
 },
-
 /* função para buscar entregas com status de pedente  */
 getEntregasPendentes: async (req: Request, res: Response): Promise<void> => {
   try {

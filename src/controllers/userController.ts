@@ -204,6 +204,43 @@ const userController = {
         .json({ msg: "Erro no servidor, tente novamente mais tarde." });
     }
   },
+  /* função para o propio usuario editar o seu nome, email ou senha  */
+  editOwnUser: async (req: Request, res: Response): Promise<void> => {
+    const userId = req.params.id;; // Pega o ID do usuário autenticado
+    const { name, email, password } = req.body; // Dados a serem atualizados
+
+   
+
+    try {
+      // Verificar se o usuário existe
+      const user = await User.findById(userId);
+      if (!user) {
+        res.status(404).json({ msg: "Usuário não encontrado." });
+        return;
+      }
+
+      // Atualizar os campos do usuário se fornecidos
+      if (name) user.name = name;
+      if (email) user.email = email;
+
+      // Atualizar a senha se for fornecida (e criptografá-la)
+      if (password) {
+        const salt = await bcrypt.genSalt(12); // Gerar o salt para a hash
+        const hashedPassword = await bcrypt.hash(password, salt); // Hash da senha
+        user.password = hashedPassword;
+      }
+
+      // Salvar as alterações no banco de dados
+      await user.save();
+
+      res.status(201).json({ msg: "Usuário atualizado com sucesso!", user });
+    } catch (error) {
+      console.log(error);
+      res
+        .status(500)
+        .json({ msg: "Erro no servidor, tente novamente mais tarde." });
+    }
+  },
 };
 
 export default userController;
