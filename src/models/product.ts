@@ -77,7 +77,7 @@ interface IProduto extends Document {
   seoDescription?: string;
   produto_verify?: boolean;
   produto_marcket?: boolean;
-  produto_de_rota?: boolean;
+  produto_de_dist?: boolean;
   produto_shared?: boolean;
   produto_servico?: boolean;
   mostrar_no_super_market?: boolean;
@@ -320,7 +320,7 @@ const produtoSchema = new Schema<IProduto>(
       type: Boolean,
       default: false,
     },
-    produto_de_rota: {
+    produto_de_dist: {
       type: Boolean,
       default: false,
     },

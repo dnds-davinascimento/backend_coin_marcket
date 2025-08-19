@@ -111,11 +111,15 @@ interface IProdutoBody {
   produto_do_fornecedor?: string;
   produto_verify?: boolean;
   produto_marcket?: boolean;
-  produto_de_rota?: boolean;
+  produto_de_dist?: boolean;
   produto_shared?: boolean;
   produto_servico?: boolean;
   mostrar_no_super_market?: boolean;
   imgs?: { url: string, key: string }[]; // Array de imagens, cada imagem é um objeto com a propriedade url
+  videos?: { url: string, key?: string }[]; // Array de vídeos, cada vídeo é um objeto com a propriedade url
+  slug?: string;
+  urlCanonical?: string;
+
 
 }
 interface ProductIdeal {
@@ -339,18 +343,17 @@ const produto_Schema = {
       produto_do_fornecedor,
       produto_verify = false, // Valor padrão
       produto_marcket = false, // Valor padrão
-      produto_de_rota = false, // Valor padrão
+      produto_de_dist = false, // Valor padrão
       produto_shared = false, // Valor padrão
       produto_servico = false, // Valor padrão
       mostrar_no_super_market = false, // Valor padrão
       imgs = [], // Array de imagens, pode ser vazio ou conter objetos com a propriedade url
+      videos = [], // Array de vídeos, pode ser vazio ou conter objetos com a propriedade url
 
     } = req.body.produto as IProdutoBody;
 
 
     const id_loja = req.headers.user_store_id as string;
-
-
 
     const loja = await Loja.findById(id_loja); // Busca a loja pelo ID
     if (!loja) {
@@ -358,10 +361,15 @@ const produto_Schema = {
       return;
     }
     const id_store = loja._id; // ID da loja
+    /*  gerar slug e urlCanonical apartir do nome do produto */
+    const slug = nome.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const urlCanonical = `${process.env.URL_CANONICAL}/${slug}`; // Usando a variável de ambiente para a URL canônica
 
     try {
       const produto = await Produto.create({
         nome,
+        slug,
+        urlCanonical,
         categoria,
         codigo_interno,
         codigo_da_nota,
@@ -390,12 +398,13 @@ const produto_Schema = {
         produto_do_fornecedor,
         produto_verify,
         produto_marcket,
-        produto_de_rota,
+        produto_de_dist,
         produto_shared,
         produto_servico,
         mostrar_no_super_market,
 
         produto_sincronizado: false,
+        videos,
         imgs, // Inicializa o array de imagens vazio
         historico: [
           {
@@ -409,10 +418,6 @@ const produto_Schema = {
             estoqueAposAlteracao: estoque || 0,
           },
         ],
-
-
-
-
 
       });
 
@@ -546,13 +551,14 @@ const produto_Schema = {
       ipi,
       frete,
       produto_do_fornecedor,
-      produto_verify = false, // Valor padrão
-      produto_marcket = false, // Valor padrão
-      produto_de_rota = false, // Valor padrão
-      produto_shared = false, // Valor padrão
-      produto_servico = false, // Valor padrão
-      mostrar_no_super_market = false, // Valor padrão
+      produto_verify , 
+      produto_marcket , 
+      produto_de_dist , 
+      produto_shared , 
+      produto_servico , 
+      mostrar_no_super_market , 
     } = req.body.produto as IProdutoBody; // Pega os dados do produto do corpo da requisição
+    
    
 
     try {
@@ -594,7 +600,7 @@ if (tabelas_precos && tabelas_precos.length > 0) {
         : produto.produto_do_fornecedor;
       produto.produto_verify = produto_verify || produto.produto_verify;
       produto.produto_marcket = produto_marcket || produto.produto_marcket;
-      produto.produto_de_rota = produto_de_rota || produto.produto_de_rota;
+      produto.produto_de_dist = produto_de_dist || produto.produto_de_dist;
       produto.produto_shared = produto_shared || produto.produto_shared;
       produto.produto_servico = produto_servico || produto.produto_servico;
       produto.mostrar_no_super_market = mostrar_no_super_market || produto.mostrar_no_super_market;
@@ -633,7 +639,7 @@ if (tabelas_precos && tabelas_precos.length > 0) {
       const user_store_id = req.headers.id as string;
 
       res.status(200).json({ msg: "Sincronização de produtos iniciada. Após o término da sincronização, você receberá um email." });
-      console.log("Sincronização de produtos iniciada.");
+      
       // Obter as credenciais do usuário
       const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
 
@@ -692,14 +698,12 @@ if (tabelas_precos && tabelas_precos.length > 0) {
           fimDePagina = true;
         } else {
           paginaIdeal++;
-          console.log(
-            `Página ${paginaIdeal} de produtos da Shop9: ${produtosIdeal.length}`
-          );
+         
         }
 
       }
 
-      console.log(`Total de produtos pegos na Shop9: ${produtosIdeal.length}`);
+     
       // Comparação e atualização de preços
       for (const produto of produtosIdeal) {
         if (!produto || !produto.codigo) {
@@ -708,7 +712,7 @@ if (tabelas_precos && tabelas_precos.length > 0) {
         }
 
         if (produto.observacao3) {
-          console.log("Produto:", produto);
+          
 
 
 
@@ -732,18 +736,7 @@ if (tabelas_precos && tabelas_precos.length > 0) {
                 headers,
               }
             );
-            console.log("Resposta da criação do produto:", respose.data);
             produtosCadastrados++;
-
-
-
-
-
-
-
-
-
-
           }
         }
 
@@ -765,7 +758,7 @@ if (tabelas_precos && tabelas_precos.length > 0) {
       // Calcular o tempo total de sincronização
       const fimSincronizacao = Date.now();
       const tempoTotal = (fimSincronizacao - inicioSincronizacao) / 1000; // em segundos
-      console.log(`Tempo total de sincronização: ${tempoTotal} segundos`);
+     
       await sendEmail(
         emails,
         produtosIdeal.length,
@@ -859,7 +852,7 @@ if (tabelas_precos && tabelas_precos.length > 0) {
 
 
       const product = req.body; // O corpo da requisição deve conter o array de 
-      console.log("Produto recebido:", product);
+     
 
       const results = []; // Array para armazenar os resultados dos produtos enviados
 
@@ -868,7 +861,7 @@ if (tabelas_precos && tabelas_precos.length > 0) {
         const existingProduct = await Produto.findOne({
           codigo_ideal: product.codigo,
         });
-        console.log("Produto existente:", existingProduct);
+        
 
         if (existingProduct) {
           // Produto já está cadastrado
@@ -893,7 +886,7 @@ if (tabelas_precos && tabelas_precos.length > 0) {
             headers,
           }
         );
-        console.log("Resposta da criação de categoria:", resposeCategoria);
+        
 
         const codigoSubClasse = String(product.codigoSubclasse);
 
@@ -908,7 +901,7 @@ if (tabelas_precos && tabelas_precos.length > 0) {
             headers,
           }
         );
-        console.log("Resposta da criação de subcategoria:", resposeSubCategoria);
+        
         const categoriaProduto = {
           id: resposeCategoria.data._id, // Usando o ID da subcategoria criada
           nome: resposeCategoria.data.nome, // Nome da categoria
@@ -968,7 +961,7 @@ if (tabelas_precos && tabelas_precos.length > 0) {
           product,
           { headers }
         );
-        console.log("Imagens sincronizadas:", response_img.data);
+        
         /* generate metados IA */
         const response_IA = await axios.post<responseIA>(
           `${process.env.URL_BACKEND}/api/sinc_metadados_IA`,
