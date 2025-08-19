@@ -42,7 +42,7 @@ const adminController = {
         },
       });
     } catch (error) {
-      console.log(error);
+     
       res.status(500).json({ msg: "Erro no servidor, tente novamente mais tarde." });
     }
   },
@@ -116,7 +116,7 @@ const adminController = {
           },
         });
       } catch (error) {
-        console.log(error);
+        
         res.status(500).json({ msg: "Erro no servidor, tente novamente mais tarde." });
       }
     },

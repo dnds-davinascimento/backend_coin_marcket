@@ -14,13 +14,13 @@ const webhookController = {
     try {
       // Para garantir que o body seja capturado como JSON
       const body = req.body;
-      console.log("Body:", body);
+     
 
       // Aqui você pode adicionar sua lógica para verificar o HMAC ou processar o body
       // Exemplo: verificar se é um produto válido
       if (body && body.product) {
         // Lógica para lidar com o produto criado
-        console.log("Produto criado:", body.product);
+       
       }
 
       res.status(200).send("Webhook recebido com sucesso");
@@ -34,7 +34,7 @@ const webhookController = {
     try {
       // Para garantir que o body seja capturado como JSON
       const body = req.body;
-      console.log("Body:", body);
+    
 
       res.status(200).send("Webhook recebido com sucesso");
     } catch (error) {
@@ -46,7 +46,7 @@ const webhookController = {
     try {
       // Para garantir que o body seja capturado como JSON
       const body = req.body;
-      console.log("Body:", body);
+     
 
       res.status(200).send("Webhook recebido com sucesso");
     } catch (error) {

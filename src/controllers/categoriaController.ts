@@ -356,7 +356,7 @@ const categoriaSchema = {
             headers,
           }
         );
-        console.log(classes)
+        
         // Filtrando os dados
         const resultadoclasse = classes.dados.find(
           (item) => item.codigo === categoria_codigo
@@ -459,7 +459,7 @@ const categoriaSchema = {
         const resultadoSubclasse = subclesses.dados.find(
           (item) => item.codigo === subcategoria_codigo
         );
-        console.log(resultadoSubclasse)
+        
         if (resultadoSubclasse) {
           // Verifica se a categoria pai foi fornecida
           if (!req.body.parient) {

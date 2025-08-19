@@ -204,7 +204,7 @@ const customerController = {
         // Adiciona os emails dos usuários encontrados
         emails.push(...users.map(user => user.email));
 
-        console.log(emails);
+        
 
 
         // Somente envia o e-mail se a sequência ideal tiver sido salva com sucesso

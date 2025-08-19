@@ -84,14 +84,16 @@ interface IProduto extends Document {
   produto_da_loja?: Types.ObjectId;
   produto_do_fornecedor?: Types.ObjectId;
   historico?: IHistorico[];
-  imgs?: [{
-    url: string;
-    key?: string;
-  }];
-  videos?: [{
-    url: string;
-    key?: string;
-  }];
+imgs?: {
+  url: string;
+  key?: string;
+}[];
+
+videos?: {
+  url: string;
+  key?: string;
+}[];
+
   tabelas_precos?: [{
     nome: string;
     valor?: string;

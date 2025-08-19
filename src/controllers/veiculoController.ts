@@ -5,7 +5,7 @@ const veiculoController = {
   // Criar um novo veículo
     criarVeiculo: async (req: Request, res: Response) => {
         try {
-          console.log('Dados recebidos:', req.body);
+          
         const novoVeiculo = await Veiculo.create(req.body);
         return res.status(201).json(novoVeiculo);
         } catch (error) {

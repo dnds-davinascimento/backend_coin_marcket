@@ -57,7 +57,7 @@ const credenciaisController = {
             },
         });
         } catch (error) {
-        console.log(error);
+        
         res.status(500).json({ msg: "Erro no servidor, tente novamente mais tarde." });
         }
     },
@@ -72,7 +72,7 @@ const credenciaisController = {
         const credenciaisList = await credenciais.find({ credencial_loja_id:id_loja });
         res.status(200).json({ credenciais: credenciaisList });
         } catch (error) {
-        console.log(error);
+        
         res.status(500).json({ msg: "Erro no servidor, tente novamente mais tarde." });
         }
     },
@@ -102,7 +102,7 @@ const credenciaisController = {
         await credencial.save();
         res.status(200).json({ msg: "Credencial atualizada com sucesso!" });
         } catch (error) {
-        console.log(error);
+        
         res.status(500).json({ msg: "Erro no servidor, tente novamente mais tarde." });
         }
     }

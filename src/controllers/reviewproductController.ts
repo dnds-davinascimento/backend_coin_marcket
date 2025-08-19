@@ -59,7 +59,7 @@ const reviewproductController = {
     try {
      
       const id = req.params.id;
-      console.log("Listando avaliações com parâmetros:", req.params );
+      
 
       const reviews = await ReviewProductModel.find({productId: id })
         .sort({ createdAt: -1 }) // Ordenar por data de criação, do mais recente para o mais antigo

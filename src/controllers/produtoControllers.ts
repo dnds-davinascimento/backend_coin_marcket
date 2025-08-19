@@ -115,8 +115,9 @@ interface IProdutoBody {
   produto_shared?: boolean;
   produto_servico?: boolean;
   mostrar_no_super_market?: boolean;
-  imgs?: { url: string, key: string }[]; // Array de imagens, cada imagem é um objeto com a propriedade url
-  videos?: { url: string, key?: string }[]; // Array de vídeos, cada vídeo é um objeto com a propriedade url
+imgs?: Array<{ url: string; key?: string }>;
+videos?: Array<{ url: string; key?: string }>;
+
   slug?: string;
   urlCanonical?: string;
 
@@ -538,6 +539,7 @@ const produto_Schema = {
       un,
       tabelas_precos,
       imgs,
+      videos,
       preco_de_custo,
       preco_de_venda,
       ncm,
@@ -604,7 +606,15 @@ if (tabelas_precos && tabelas_precos.length > 0) {
       produto.produto_shared = produto_shared || produto.produto_shared;
       produto.produto_servico = produto_servico || produto.produto_servico;
       produto.mostrar_no_super_market = mostrar_no_super_market || produto.mostrar_no_super_market;
-      produto.imgs = imgs && imgs.length > 0 ? [imgs[0]] : undefined; // Atualiza as imagens do produto, se houver novas imagens no corpo da requisição
+produto.imgs = imgs && imgs.length > 0 
+  ? imgs.map(img => ({ url: img.url, key: img.key })) 
+  : [];
+
+produto.videos = videos && videos.length > 0 
+  ? videos.map(video => ({ url: video.url, key: video.key })) 
+  : [];
+
+
       const id_acao = new Types.ObjectId(); // Gera um novo ID para a ação
       (produto.historico ??= []).push({
         usuario: "Sistema",

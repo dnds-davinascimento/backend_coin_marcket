@@ -70,7 +70,7 @@ const userController = {
         },
       });
     } catch (error) {
-      console.log(error);
+      
       res
         .status(500)
         .json({ msg: "Erro no servidor, tente novamente mais tarde." });
@@ -95,7 +95,7 @@ const userController = {
       // Retorna os dados da loja
       res.status(200).json(store);
     } catch (error) {
-      console.log(error);
+     
       res
         .status(500)
         .json({ msg: "Erro no servidor, tente novamente mais tarde" });
@@ -235,7 +235,7 @@ const userController = {
 
       res.status(201).json({ msg: "Usuário atualizado com sucesso!", user });
     } catch (error) {
-      console.log(error);
+      
       res
         .status(500)
         .json({ msg: "Erro no servidor, tente novamente mais tarde." });

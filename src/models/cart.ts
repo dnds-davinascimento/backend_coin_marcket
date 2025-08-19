@@ -33,10 +33,10 @@ interface IProdutoCart {
   end?: string;
   categoria?: string;
   status: string;
-  imgs?: [{
-    url: string;
-    key?: string;
-  }];
+imgs?: {
+  url: string;
+  key?: string;
+}[];
 }
 
 interface ICart extends Document {
