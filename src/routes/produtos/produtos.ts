@@ -326,4 +326,10 @@ router.route("/sincronizarEstoqueShop9MongoDB").post(
       permissionsMiddleware('product'),  */
   (req: Request, res: Response) => produtoControllers.sincronizarEstoqueShop9MongoDB(req, res)
 );
+router.route("/functionSincSlugUrlCanonical").post(
+  /*     checkToken,
+      permissionsMiddleware('product'),  */
+  (req: Request, res: Response) => produtoControllers.functionSincSlugUrlCanonical(req, res)
+);
+
 export default router;

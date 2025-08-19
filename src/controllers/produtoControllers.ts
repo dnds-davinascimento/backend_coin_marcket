@@ -1268,13 +1268,17 @@ if (tabelas_precos && tabelas_precos.length > 0) {
       return;
     }
     try {
-      const produto = await Produto.findOne({ nome: slug });
+      const produto = await Produto.findOne({slug: slug });
+      // Verifica se o produto foi encontrado
+      
       if (!produto) {
+        console.log("Produto não encontrado:", slug);
         res.status(404).json({ msg: "Produto não encontrado." });
         return;
       }
       res.status(200).json(produto);
     } catch (error) {
+      console.error("Erro ao buscar produto:", error);
       res.status(500).json({ msg: "Erro ao buscar produto" });
     } 
   },
@@ -1420,6 +1424,34 @@ if (precoAtualizado) {
     } catch (error) {
       console.log(error);
       console.error("Erro na sincronização de preços:", error);
+    }
+  },
+  functionSincSlugUrlCanonical: async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const produtos = await Produto.find({}); // Busca todos os produtos no MongoDB
+      if (!produtos || produtos.length === 0) {
+        res.status(404).json({ msg: "Nenhum produto encontrado." });
+        return;
+      }
+      for (const produto of produtos) {
+        if (!produto.nome || !produto.codigo_ideal) continue;
+
+        // Gerar o slug a partir do nome do produto
+        const slug = produto.nome.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+        // Atualizar o produto com o slug e a URL canônica
+        produto.slug = slug;
+        produto.urlCanonical = `${process.env.URL_CANONICAL}/${slug}`;
+
+        await produto.save();
+        console.log(`Slug e URL canônica atualizados para o produto ${produto.codigo_ideal}`);
+        res.status(200).json({ msg: "Slugs e URLs canônicas atualizados com sucesso." });
+      }
+    } catch (error) {
+      
     }
   },
   sincronizarEstoqueShop9MongoDB: async (

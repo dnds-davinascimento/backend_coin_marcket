@@ -51,6 +51,8 @@ interface IProduto extends Document {
   custo_do_estoque?: number;
   valor_do_estoque?: number;
   estoque_faltando?: number;
+  urlCanonical?: string;
+  slug?: string;
   markup_sobre_o_Preco_de_custo?: number;
   ncm?: string;
   cest?: string;
@@ -83,6 +85,10 @@ interface IProduto extends Document {
   produto_do_fornecedor?: Types.ObjectId;
   historico?: IHistorico[];
   imgs?: [{
+    url: string;
+    key?: string;
+  }];
+  videos?: [{
     url: string;
     key?: string;
   }];
@@ -121,6 +127,15 @@ const produtoSchema = new Schema<IProduto>(
       type: Number,
       required: true,
       default: 0,
+    },
+    urlCanonical: {
+      type: String,
+      required: true,
+    },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
     },
     categoria: {
       id: {
@@ -339,6 +354,12 @@ const produtoSchema = new Schema<IProduto>(
       },
     ],
     imgs: [
+      {
+        url: { type: String, required: false },
+        key: { type: String, required: false },
+      },
+    ],
+    videos: [
       {
         url: { type: String, required: false },
         key: { type: String, required: false },
