@@ -224,7 +224,7 @@ getEntregas: async (req: Request, res: Response): Promise<void> => {
         return ;
       }
 
-      if (user.cargo === "Supervisor de Logística" || user.cargo === "Motorista") {
+      if (user.cargo === "Supervisor de Logística" || user.cargo === "Motorista" || user.cargo === "Gerente") {
         // Supervisor vê tudo
         entregas = await Entrega.find()
           .select("sequencia consumidor_nome numero_nf status_entrega data_entrega createdAt")
@@ -278,7 +278,27 @@ getEntregasDetails: async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ msg: "Erro ao buscar detalhes da entrega" });
   }
 },
-/* função para confimar o status da entrega como "entregue" pelo id */
+/* função para cancelar entrega pelo id */
+cancelarEntrega: async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const entrega = await Entrega.findById(id);
+    if (!entrega) {
+      res.status(404).json({ msg: "Entrega não encontrada" });
+      return;
+    }
+
+    // Atualiza o status da entrega para cancelada
+    entrega.status_entrega = 'cancelada';
+    await entrega.save();
+
+    res.status(200).json({ msg: "Entrega cancelada com sucesso" });
+  } catch (error) {
+    
+    res.status(500).json({ msg: "Erro ao cancelar entrega" });
+  }
+},
 
 
 
