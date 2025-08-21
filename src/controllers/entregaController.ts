@@ -224,7 +224,7 @@ getEntregas: async (req: Request, res: Response): Promise<void> => {
         return ;
       }
 
-      if (user.cargo === "Supervisor de Logística") {
+      if (user.cargo === "Supervisor de Logística" || user.cargo === "Motorista") {
         // Supervisor vê tudo
         entregas = await Entrega.find()
           .select("sequencia consumidor_nome numero_nf status_entrega data_entrega createdAt")
