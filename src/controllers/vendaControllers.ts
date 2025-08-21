@@ -367,7 +367,6 @@ const venda_Schema = {
 
       // pegar n° de recibo pelo req.headers
       const sequenciaGerada = req.query.sequencia;
-
       // 2. Configuração do cabeçalho da requisição
       const headers = {
         Signature: signature,

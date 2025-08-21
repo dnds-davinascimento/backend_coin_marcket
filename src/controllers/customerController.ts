@@ -7,6 +7,10 @@ import DocumentCustomerModel from "../models/dosc_custumer";
 import Admin from "../models/Admin"; // Importa o model Admin
 import nodemailer from "nodemailer";
 import User from "../models/user";
+import { obterCredenciais } from "../services/credenciaisService";
+import { generateSignature } from "../services/generateSignature";
+import authService from "../services/authService";
+import axios from "axios";
 
 dotenv.config();
 
@@ -94,6 +98,78 @@ const mailOptions = {
     console.error("Erro ao enviar e-mail: ", error);
   }
 };
+interface ClienteDetalhes {
+  ordem: number;
+  codigo: number;
+  nome: string;
+  fantasia: string;
+  tipo: string;
+  fisicaJuridica: string;
+  cpfCnpj: string;
+  rg: string;
+  ie: string;
+  cep: string;
+  endereco: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  uf: string;
+  pais: string;
+  telefone1: string;
+  telefone2: string;
+  fax: string;
+  lGPD_Receber_Campanhas_Marketing: boolean;
+  lGPD_Receber_Contato_Situacao_Pedido: boolean;
+  lGPD_Telefone_Contato_Formatado: string;
+  entregaCep: string;
+  entregaEndereco: string;
+  entregaComplemento: string;
+  entregaBairro: string;
+  entregaCidade: string;
+  entregaUf: string;
+  entregaPais: string;
+  entregaPontoRef1: string;
+  entregaPontoRef2: string;
+  faturamentoCep: string;
+  faturamentoEndereco: string;
+  faturamentoNumero: string;
+  faturamentoComplemento: string;
+  faturamentoBairro: string;
+  faturamentoCidade: string;
+  faturamentoUf: string;
+  faturamentoPais: string;
+  faturamentoPontoRef1: string;
+  faturamentoPontoRef2: string;
+  indicadorIE: number;
+  vendedor1: {
+    ordem: number;
+    codigo: number;
+    nome: string;
+  };
+  vendedor2: {
+    ordem: number;
+    codigo: number;
+    nome: string;
+  };
+  tabelaPrecosPadrao: string;
+  codigoClasse: number;
+  codigoFilial: number;
+  filialExclusiva: boolean;
+  urlContatos: string;
+  utiliza_Fidelidade: boolean;
+  contatos: any[]; // pode tipar melhor se souber a estrutura
+  inativo: boolean;
+  comentariosGerente: string;
+}
+interface IdealSoftClienteResponse {
+  sucesso: boolean;
+  mensagem: string | null;
+  tipo: string | null;
+  complementoTipo: string | null;
+  statusCode: number;
+  dados: ClienteDetalhes;
+}
 const customerController = {
   createCustomer: async (req: Request, res: Response): Promise<void> => {
     const {
@@ -375,7 +451,48 @@ if (documentos.status === 'em análise' || documentos.status === 'reprovado') {
       console.error("Erro ao aprovar status do cliente:", error);
       res.status(500).json({ msg: "Erro no servidor ao aprovar status do cliente" });
     } 
+  },
+  getCustomersByCodigoIdealSoft: async (req: Request, res: Response): Promise<void> => {
+    
+    const codigoIdealSoft = req.query.codigo;
+          let id_loja = req.headers.user_store_id as string;
+          if (!id_loja) {
+            id_loja = "6807ab4fbaead900af4db229"
+          }
+          // Obter credenciais usando o serviço
+          const { serie, api, codFilial, senha } = await obterCredenciais(id_loja);
+            // Obter o token de autenticação para Idealsoft
+                const token = await authService.getAuthToken(serie, codFilial, api);
+                const method = "get";
+                const body = "";
+                const { signature, timestamp } = generateSignature(method, senha, body);
+          
+
+                // 2. Configuração do cabeçalho da requisição
+                const headers = {
+                  Signature: signature,
+                  CodFilial: codFilial,
+                  Authorization: `Token ${token}`,
+                  Timestamp: timestamp.toString(),
+                };
+    try {
+      const url_ideal = process.env.PRODUTION === "true" ? api : `${process.env.URL_IDEAL_LOCAL}`;
+      // Requisição para a API da Idealsoft com os headers e o código do cliente
+      const { data: RsponseClente } = await axios.get<IdealSoftClienteResponse>(`${url_ideal}/clientes/detalhes/${codigoIdealSoft}`, {
+        headers,
+      });
+      if (!RsponseClente.sucesso) {
+        res.status(404).json({ msg: "Cliente não encontrado na IdealSoft" });
+        return;
+      }
+      res.status(200).json(RsponseClente.dados);
+      
+    } catch (error) {
+      console.error("Erro ao buscar cliente pelo código IdealSoft:", error);
+      res.status(500).json({ msg: "Erro no servidor ao buscar cliente pelo código IdealSoft" });
+    }
   }
+
 };
 
 export default customerController;

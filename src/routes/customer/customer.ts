@@ -134,6 +134,9 @@ router.route("/updateCustomer/:id").put(
 router.route("/getCustomerById/:id").get(
     (req: Request, res: Response) => customerControllers.getCustomerById(req, res)
   );
+router.route("/getCustomersByCodigoIdealSoft").get(
+    (req: Request, res: Response) => customerControllers.getCustomersByCodigoIdealSoft(req, res)
+  );
 router.route("/getCustomersByStore").get(
          checkToken,
   permissionsMiddleware('client'), 
