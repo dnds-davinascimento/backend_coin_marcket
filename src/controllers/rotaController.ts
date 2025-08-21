@@ -106,6 +106,7 @@ const rotaController = {
             res.status(404).json({ msg: "Usuário não encontrado" });
             return ;
           }
+          
     
           if (user.cargo === "Supervisor de Logística" || user.cargo === "Gerente") {
             // Supervisor vê tudo
@@ -114,7 +115,7 @@ const rotaController = {
 
           } else if (user.cargo === "Motorista") {
             // Vendedor vê só as dele
-            rotas = await Entrega.find({ "motorista.id": userId })              
+            rotas = await Rota.find({ "motorista.id": userId })              
               .sort({ createdAt: -1 });
           } else {
            res.status(403).json({ msg: "Cargo não autorizado" });
