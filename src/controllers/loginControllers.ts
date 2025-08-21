@@ -83,6 +83,7 @@ const loginController = {
         isAdmin: existingAdmin ? true : false,
         isCustomer: existingCustomer ? true : false,
         typeCustomer: existingCustomer ? existingCustomer.type : null,
+        cargoUser: existingUser?.cargo,
         isUser: existingUser ? true : false,
       };
       
