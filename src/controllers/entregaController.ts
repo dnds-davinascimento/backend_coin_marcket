@@ -288,7 +288,7 @@ cancelarEntrega: async (req: Request, res: Response): Promise<void> => {
       res.status(404).json({ msg: "Entrega não encontrada" });
       return;
     }
-
+    
     // Atualiza o status da entrega para cancelada
     entrega.status_entrega = 'cancelada';
     await entrega.save();

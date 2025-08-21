@@ -25,7 +25,7 @@ router.route("/getEntregasPendentes").get(
   permissionsMiddleware('delivery'),
   (req: Request, res: Response) => entregaController.getEntregasPendentes(req, res)
 );
-router.route("/cancelarEntrega/:id").put(
+router.route("/cancelarEntrega/:id").delete(
   checkToken,
   permissionsMiddleware('delivery'),
   (req: Request, res: Response) => entregaController.cancelarEntrega(req, res)

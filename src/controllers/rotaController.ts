@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Rota from '../models/rotas'; // Importando o modelo Rota
 import { Entrega } from "../models/entregas";
+import User from "../models/user";
 interface Rota {
   numero: string;
   motorista: {
@@ -82,9 +83,54 @@ const rotaController = {
 
 
   // Listar todas as rotas
-  listarRotas: async (_req: Request, res: Response) => {
+  listarRotas: async (req: Request, res: Response) => {
+        const typeUser = req.headers.typeuser as string;
+        const userId = req.headers.userid as string;
     try {
-      const rotas = await Rota.find().sort({ createdAt: -1 });
+        if (!typeUser || !userId) {
+          res.status(400).json({ msg: "Tipo de usuário ou ID do usuário não fornecido" });
+          return;
+        }
+    
+        let rotas;
+    
+        if (typeUser === "admin") {
+          // Admin vê tudo
+          rotas = await Rota.find()            
+            .sort({ createdAt: -1 });
+    
+        } else if (typeUser === "user") {
+          // Buscar o cargo do usuário
+          const user = await User.findById(userId).select("cargo");
+          if (!user) {
+            res.status(404).json({ msg: "Usuário não encontrado" });
+            return ;
+          }
+    
+          if (user.cargo === "Supervisor de Logística" || user.cargo === "Gerente") {
+            // Supervisor vê tudo
+            rotas = await Rota.find()              
+              .sort({ createdAt: -1 });
+
+          } else if (user.cargo === "Motorista") {
+            // Vendedor vê só as dele
+            rotas = await Entrega.find({ "motorista.id": userId })              
+              .sort({ createdAt: -1 });
+          } else {
+           res.status(403).json({ msg: "Cargo não autorizado" });
+            return ;
+          }
+        
+        } else {
+          res.status(403).json({ msg: "Tipo de usuário inválido" });
+          return;
+        }
+        if (!rotas || rotas.length === 0) {
+          return res.status(404).json({ msg: "Nenhuma rota encontrada" });
+        }
+
+    
+      
       return res.status(200).json(rotas);
     } catch (error) {
       return res.status(500).json({ error: 'Erro ao listar as rotas' });
