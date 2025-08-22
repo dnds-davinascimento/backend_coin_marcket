@@ -109,61 +109,78 @@ const rotaController = {
     }
   },  
 
-  // Listar todas as rotas
-  listarRotas: async (req: Request, res: Response) => {
-        const typeUser = req.headers.typeuser as string;
-        const userId = req.headers.userid as string;
-    try {
-        if (!typeUser || !userId) {
-          res.status(400).json({ msg: "Tipo de usuário ou ID do usuário não fornecido" });
-          return;
-        }
-    
-        let rotas;
-    
-        if (typeUser === "admin") {
-          // Admin vê tudo
-          rotas = await Rota.find()            
-            .sort({ createdAt: -1 });
-    
-        } else if (typeUser === "user") {
-          // Buscar o cargo do usuário
-          const user = await User.findById(userId).select("cargo");
-          if (!user) {
-            res.status(404).json({ msg: "Usuário não encontrado" });
-            return ;
-          }
-          
-    
-          if (user.cargo === "Supervisor de Logística" || user.cargo === "Gerente") {
-            // Supervisor vê tudo
-            rotas = await Rota.find()              
-              .sort({ createdAt: -1 });
+// Listar todas as rotas
+listarRotas: async (req: Request, res: Response) => {
+  const typeUser = req.headers.typeuser as string;
+  const userId = req.headers.userid as string;
 
-          } else if (user.cargo === "Motorista") {
-            // Vendedor vê só as dele
-            rotas = await Rota.find({ "motorista.id": userId })              
-              .sort({ createdAt: -1 });
-          } else {
-           res.status(403).json({ msg: "Cargo não autorizado" });
-            return ;
-          }
-        
-        } else {
-          res.status(403).json({ msg: "Tipo de usuário inválido" });
-          return;
-        }
-        if (!rotas || rotas.length === 0) {
-          return res.status(404).json({ msg: "Nenhuma rota encontrada" });
-        }
-
-    
-      
-      return res.status(200).json(rotas);
-    } catch (error) {
-      return res.status(500).json({ error: 'Erro ao listar as rotas' });
+  try {
+    if (!typeUser || !userId) {
+      return res
+        .status(400)
+        .json({ msg: "Tipo de usuário ou ID do usuário não fornecido" });
     }
-  },
+
+    // filtros enviados no front
+    const { motorista, data, status } = req.query;
+    
+
+    let baseQuery: any = {};
+
+    if (typeUser === "admin") {
+      // Admin vê tudo
+      baseQuery = {};
+    } else if (typeUser === "user") {
+      // Buscar o cargo do usuário
+      const user = await User.findById(userId).select("cargo");
+      if (!user) {
+        return res.status(404).json({ msg: "Usuário não encontrado" });
+      }
+
+      if (
+        user.cargo === "Supervisor de Logística" ||
+        user.cargo === "Gerente"
+      ) {
+        baseQuery = {};
+      } else if (user.cargo === "Motorista") {
+        baseQuery = { "motorista.id": userId };
+      } else {
+        return res.status(403).json({ msg: "Cargo não autorizado" });
+      }
+    } else {
+      return res.status(403).json({ msg: "Tipo de usuário inválido" });
+    }
+
+    // aplicar filtros opcionais
+    if (motorista) {
+      baseQuery["motorista.id"] = motorista;
+    }
+    if (status) {
+      baseQuery["status"] = status;
+    }
+if (data) {
+  const dataStr = data as string; // ex: "2025-08-21"
+
+  const inicio = new Date(`${dataStr}T00:00:00.000Z`);
+  const fim = new Date(`${dataStr}T23:59:59.999Z`);
+
+  baseQuery["data"] = { $gte: inicio, $lte: fim };
+}
+
+
+    const rotas = await Rota.find(baseQuery).sort({ createdAt: -1 });
+
+    if (!rotas || rotas.length === 0) {
+      return res.status(404).json({ msg: "Nenhuma rota encontrada" });
+    }
+
+    return res.status(200).json(rotas);
+  } catch (error) {
+    
+    return res.status(500).json({ error: "Erro ao listar as rotas" });
+  }
+},
+
   /* buscar rota pelo id */
   buscarRotaPorId: async (req: Request, res: Response) => {
     try {

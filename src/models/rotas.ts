@@ -36,7 +36,7 @@ export interface IRota extends Document  {
             cep: string;
         };
     }[];
-    status: 'pendente' | 'em_transporte' | 'concluida' | 'cancelada';
+    status: 'pendente'  | 'concluida' | 'cancelada';
     createdAt: Date;
     updatedAt: Date;
 }

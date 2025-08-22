@@ -141,164 +141,199 @@ export interface DocumentoFiscal {
 }
 const entregaController = {
   // Controlador para criar uma nova entrega
-createEntrega: async (req: Request, res: Response): Promise<void> => {
-  try {
-    const dados= req.body;
-    
-   
-    
+  createEntrega: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const dados = req.body;
 
-    if (!dados || !dados.endereco_entrega) {
-      res.status(400).json({ msg: "Dados de entrega inválidos" });
-      return;
+
+
+
+      if (!dados || !dados.endereco_entrega) {
+        res.status(400).json({ msg: "Dados de entrega inválidos" });
+        return;
+      }
+      /* verificar se já não existe uma entrega com a mesma sequencia */
+      const sequenciaExistente = await Entrega.findOne({ sequencia: dados.sequencia });
+      if (sequenciaExistente) {
+
+        res.status(400).json({ msg: "Já existe uma entrega com essa sequência" });
+        return;
+      }
+      // Verifica o ultimo número da entrega já existe  exemplo: 0001, 0002, 0003
+      const ultimoEntrega = await Entrega.findOne().sort({ numero: -1 });
+      const numeroSequencia = ultimoEntrega ? ultimoEntrega.sequencia + 1 : 1;
+      const novaEntrega = new Entrega({
+        link_da_localizacao: dados.link_da_localizacao || '',
+        numero: `ENT-${numeroSequencia.toString().padStart(4, '0')}`,
+
+        sequencia: dados.sequencia,
+        codigo_Cliente: dados.codigo_Cliente?.toString(),
+        consumidor_nome: dados.consumidor_nome,
+        consumidor_email: dados.consumidor_email || '',
+        consumidor_contato: dados.consumidor_contato || '',
+        numero_nf: dados.numero_nf || '',
+        tipo_Operacao: dados.tipo_Operacao,
+        tipo_Selecionado: dados.tipo_Selecionado,
+        filial: dados.filial,
+        vendedor: dados.vendedor,
+        responsavelPorReceber: dados.responsavelPorReceber,
+        endereco_entrega: dados.endereco_entrega,
+        status_entrega: 'pendente',
+        data_entrega: dados.data_entrega || null,
+        data_confirmacao_cliente: dados.data_confirmacao_cliente || null,
+        observacoes: dados.observacoes || [],
+        // novos campos
+        levarMaquina: typeof dados.levarMaquina === "boolean" ? dados.levarMaquina : false,
+        parcelas: typeof dados.parcelas === "number" ? dados.parcelas : 1,
+        historico: dados.historico || [],
+
+      });
+
+      const saved = await novaEntrega.save();
+      res.status(201).json({ msg: "Entrega criada com sucesso", entrega: saved, sucesso: true });
+    } catch (error) {
+
+
+      res.status(500).json({ msg: "Erro ao criar entrega" });
     }
-    /* verificar se já não existe uma entrega com a mesma sequencia */
-    const sequenciaExistente = await Entrega.findOne({ sequencia: dados.sequencia });
-    if (sequenciaExistente) {
-      
-      res.status(400).json({ msg: "Já existe uma entrega com essa sequência" });
-      return;
-    }
-    // Verifica o ultimo número da entrega já existe  exemplo: 0001, 0002, 0003
-    const ultimoEntrega = await Entrega.findOne().sort({ numero: -1 });
-    const numeroSequencia = ultimoEntrega ? ultimoEntrega.sequencia + 1 : 1;
-    const novaEntrega = new Entrega({
-      link_da_localizacao: dados.link_da_localizacao || '',
-      numero: `ENT-${numeroSequencia.toString().padStart(4, '0')}`,
+  },
+  /* buscar entregas */
+  getEntregas: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const typeUser = req.headers.typeuser as string;
+      const userId = req.headers.userid as string;
 
-      sequencia: dados.sequencia,
-      codigo_Cliente: dados.codigo_Cliente?.toString(),
-      consumidor_nome: dados.consumidor_nome,
-      consumidor_email: dados.consumidor_email || '',
-      consumidor_contato: dados.consumidor_contato || '',
-      numero_nf: dados.numero_nf || '',
-      tipo_Operacao: dados.tipo_Operacao,
-      tipo_Selecionado: dados.tipo_Selecionado,
-      filial: dados.filial ,
-      vendedor: dados.vendedor ,
-      responsavelPorReceber:dados.responsavelPorReceber,
-      endereco_entrega: dados.endereco_entrega,
-      status_entrega: 'pendente',
-      data_entrega: dados.data_entrega || null,
-      data_confirmacao_cliente: dados.data_confirmacao_cliente || null,
-      observacoes:dados.observacoes || [],
-     // novos campos
-      levarMaquina: typeof dados.levarMaquina === "boolean" ? dados.levarMaquina : false,
-      parcelas: typeof dados.parcelas === "number" ? dados.parcelas : 1,
-      historico:dados.historico || [],
-
-    });
-
-    const saved = await novaEntrega.save();
-    res.status(201).json({ msg: "Entrega criada com sucesso", entrega: saved,sucesso: true });
-  } catch (error) {
- 
-    
-    res.status(500).json({ msg: "Erro ao criar entrega" });
-  }
-},
-/* buscar entregas */
-getEntregas: async (req: Request, res: Response): Promise<void> => {
-  try {
-    const typeUser = req.headers.typeuser as string;
-    const userId = req.headers.userid as string;
-
-    if (!typeUser || !userId) {
-      res.status(400).json({ msg: "Tipo de usuário ou ID do usuário não fornecido" });
-      return;
-    }
-
-    let entregas;
-
-    if (typeUser === "admin") {
-      // Admin vê tudo
-      entregas = await Entrega.find()
-        .select("sequencia consumidor_nome numero_nf status_entrega data_entrega createdAt")
-        .sort({ createdAt: -1 });
-
-    } else if (typeUser === "user") {
-      // Buscar o cargo do usuário
-      const user = await User.findById(userId).select("cargo");
-      if (!user) {
-        res.status(404).json({ msg: "Usuário não encontrado" });
-        return ;
+      if (!typeUser || !userId) {
+        res.status(400).json({ msg: "Tipo de usuário ou ID do usuário não fornecido" });
+        return;
       }
 
-      if (user.cargo === "Supervisor de Logística" || user.cargo === "Motorista" || user.cargo === "Gerente") {
-        // Supervisor vê tudo
-        entregas = await Entrega.find()
+      const { data, sequencia, numero_nf, status } = req.query;
+     
+
+      // monta query base com filtros
+      let baseQuery: any = {};
+
+      if (data) {
+        const dataStr = data as string; // ex: "2025-08-21"
+
+        const inicio = new Date(`${dataStr}T00:00:00.000Z`);
+        const fim = new Date(`${dataStr}T23:59:59.999Z`);
+
+        baseQuery["createdAt"] = { $gte: inicio, $lte: fim };
+      }
+
+
+      if (sequencia) {
+        baseQuery["sequencia"] = Number(sequencia);
+      }
+
+      if (numero_nf) {
+        baseQuery["numero_nf"] = numero_nf;
+      }
+
+      if (status) {
+        baseQuery["status_entrega"] = status;
+      }
+
+      let entregas;
+
+      if (typeUser === "admin") {
+        // Admin vê tudo
+        entregas = await Entrega.find(baseQuery)
           .select("sequencia consumidor_nome numero_nf status_entrega data_entrega createdAt")
           .sort({ createdAt: -1 });
-      } else if (user.cargo === "Vendedor") {
-        // Vendedor vê só as dele
-        entregas = await Entrega.find({ "vendedor.id": userId })
-          .select("sequencia consumidor_nome numero_nf status_entrega data_entrega createdAt")
-          .sort({ createdAt: -1 });
+
+      } else if (typeUser === "user") {
+        // Buscar cargo
+        const user = await User.findById(userId).select("cargo");
+        if (!user) {
+          res.status(404).json({ msg: "Usuário não encontrado" });
+          return;
+        }
+
+        if (["Supervisor de Logística", "Motorista", "Gerente"].includes(user.cargo ?? "")) {
+          // vê tudo
+          entregas = await Entrega.find(baseQuery)
+            .select("sequencia consumidor_nome numero_nf status_entrega data_entrega createdAt")
+            .sort({ createdAt: -1 });
+
+        } else if ((user.cargo ?? "") === "Vendedor") {
+          // só as dele
+          entregas = await Entrega.find({ ...baseQuery, "vendedor.id": userId })
+            .select("sequencia consumidor_nome numero_nf status_entrega data_entrega createdAt")
+            .sort({ createdAt: -1 });
+
+        } else {
+          res.status(403).json({ msg: "Cargo não autorizado" });
+          return;
+        }
       } else {
-       res.status(403).json({ msg: "Cargo não autorizado" });
-        return ;
+        res.status(403).json({ msg: "Tipo de usuário inválido" });
+        return;
       }
 
-    } else {
-      res.status(403).json({ msg: "Tipo de usuário inválido" });
-      return;
+      if (!entregas.length) {
+        res.status(404).json({ msg: "Nenhuma entrega encontrada" });
+        return;
+      }
+
+      res.status(200).json(entregas);
+    } catch (error) {
+     
+      res.status(500).json({ msg: "Erro ao buscar entregas" });
     }
+  },
 
-    res.status(200).json(entregas);
-  } catch (error) {
-    
-    res.status(500).json({ msg: "Erro ao buscar entregas" });
-  }
-},
-/* função para buscar entregas com status de pedente  */
-getEntregasPendentes: async (req: Request, res: Response): Promise<void> => {
-  try {
-    const entregasPendentes = await Entrega.find({ status_entrega: 'pendente' }).sort({ createdAt: -1 });
+  /* função para buscar entregas com status de pedente  */
+  getEntregasPendentes: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const entregasPendentes = await Entrega.find({ status_entrega: 'pendente' }).sort({ createdAt: -1 });
 
-    res.status(200).json(entregasPendentes);
-  } catch (error) {
-   
-    res.status(500).json({ msg: "Erro ao buscar entregas pendentes" });
-  }
-},
-getEntregasDetails: async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-   
-    const entrega = await Entrega.findById(id);
+      res.status(200).json(entregasPendentes);
+    } catch (error) {
 
-    if (!entrega) {
-      res.status(404).json({ msg: "Entrega não encontrada" });
-      return;
+      res.status(500).json({ msg: "Erro ao buscar entregas pendentes" });
     }
+  },
+  getEntregasDetails: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
 
-    res.status(200).json(entrega);
-  } catch (error) {
-    
-    res.status(500).json({ msg: "Erro ao buscar detalhes da entrega" });
-  }
-},
-/* função para cancelar entrega pelo id */
-cancelarEntrega: async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
+      const entrega = await Entrega.findById(id);
 
-    const entrega = await Entrega.findById(id);
-    if (!entrega) {
-      res.status(404).json({ msg: "Entrega não encontrada" });
-      return;
+      if (!entrega) {
+        res.status(404).json({ msg: "Entrega não encontrada" });
+        return;
+      }
+
+      res.status(200).json(entrega);
+    } catch (error) {
+
+      res.status(500).json({ msg: "Erro ao buscar detalhes da entrega" });
     }
-    
-    // Atualiza o status da entrega para cancelada
-    entrega.status_entrega = 'cancelada';
-    await entrega.save();
+  },
+  /* função para cancelar entrega pelo id */
+  cancelarEntrega: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
 
-    res.status(200).json({ msg: "Entrega cancelada com sucesso" });
-  } catch (error) {
-    
-    res.status(500).json({ msg: "Erro ao cancelar entrega" });
-  }
-},
+      const entrega = await Entrega.findById(id);
+      if (!entrega) {
+        res.status(404).json({ msg: "Entrega não encontrada" });
+        return;
+      }
+
+      // Atualiza o status da entrega para cancelada
+      entrega.status_entrega = 'cancelada';
+      await entrega.save();
+
+      res.status(200).json({ msg: "Entrega cancelada com sucesso" });
+    } catch (error) {
+
+      res.status(500).json({ msg: "Erro ao cancelar entrega" });
+    }
+  },
 
 
 
