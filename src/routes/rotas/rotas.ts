@@ -9,6 +9,12 @@ router.route("/criarRota").post(
   permissionsMiddleware('route'), 
     (req: Request, res: Response) => rotaController.criarRota(req, res)
   );
+router.route("/editarRota/:id").put(
+  checkToken,
+  permissionsMiddleware('route'), 
+    (req: Request, res: Response) => rotaController.editarRota(req, res)
+  );
+
 router.route("/listarRotas").get(
     checkToken,
   permissionsMiddleware('route'),

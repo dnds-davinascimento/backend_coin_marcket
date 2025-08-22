@@ -80,7 +80,34 @@ const rotaController = {
       return res.status(500).json({ error: 'Erro ao criar a rota', detalhes: error });
     }
   },
+  /* função para editar rota por Id */
+  editarRota: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { motorista, veiculo, data, entregas } = req.body;
+      
 
+      if (!motorista || !veiculo || !data || !entregas || entregas.length === 0) {
+        return res.status(400).json({ error: 'Dados incompletos para editar a rota' });
+      }
+
+      const rota = await Rota.findById(id);
+      if (!rota) {
+        return res.status(404).json({ error: 'Rota não encontrada' });
+      }
+      rota.motorista = motorista || rota.motorista;
+      rota.veiculo = veiculo || rota.veiculo;
+      rota.data = data || rota.data;
+      rota.entregas = entregas || rota.entregas;
+      await rota.save();
+
+
+      return res.status(200).json(rota);
+    } catch (error) {
+      
+      return res.status(500).json({ error: 'Erro ao editar a rota', detalhes: error });
+    }
+  },  
 
   // Listar todas as rotas
   listarRotas: async (req: Request, res: Response) => {
@@ -150,70 +177,70 @@ const rotaController = {
     }
   },
   
-// PUT /confirmarEntregas/:rotaId
-updateStatusEntregaNaRota: async (req: Request, res: Response) => {
-  try {
-    const id = req.params.id;
-    const { entregaId, nameUser, idUser } = req.body;
-   
+  // PUT /confirmarEntregas/:rotaId
+  updateStatusEntregaNaRota: async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      const { entregaId, nameUser, idUser } = req.body;
+    
 
-    const rota = await Rota.findById(id);
-    if (!rota) {
-     
-      return res.status(404).json({ msg: "Rota não encontrada" });
-    }
- 
+      const rota = await Rota.findById(id);
+      if (!rota) {
+      
+        return res.status(404).json({ msg: "Rota não encontrada" });
+      }
+  
 
-const entregaNaRota = rota.entregas.find(e => 
-  e._id.toString() === entregaId
-);
-
-
+  const entregaNaRota = rota.entregas.find(e => 
+    e._id.toString() === entregaId
+  );
 
 
-    if (!entregaNaRota) {
-      return res.status(400).json({ msg: "Entrega não pertence a essa rota" });
-    }
 
-    // Atualiza entrega no banco de entregas
-    const entregaAtualizada = await Entrega.findByIdAndUpdate(
-      entregaId,
-      {
-        status_entrega: "entregue",
-        entregueEm: new Date().toISOString(),
-        // Atualiza histórico da entrega (push um novo registro)
-        $push: {
-          historico: {
-            usuario: `${nameUser} (${idUser})`,
-            data: new Date(),
-            acao: "Entrega confirmada como entregue",
+
+      if (!entregaNaRota) {
+        return res.status(400).json({ msg: "Entrega não pertence a essa rota" });
+      }
+
+      // Atualiza entrega no banco de entregas
+      const entregaAtualizada = await Entrega.findByIdAndUpdate(
+        entregaId,
+        {
+          status_entrega: "entregue",
+          entregueEm: new Date().toISOString(),
+          // Atualiza histórico da entrega (push um novo registro)
+          $push: {
+            historico: {
+              usuario: `${nameUser} (${idUser})`,
+              data: new Date(),
+              acao: "Entrega confirmada como entregue",
+            }
           }
-        }
-      },
-      { new: true }
-    );
+        },
+        { new: true }
+      );
 
-    if (!entregaAtualizada) {
-      return res.status(404).json({ msg: "Entrega não encontrada" });
+      if (!entregaAtualizada) {
+        return res.status(404).json({ msg: "Entrega não encontrada" });
+      }
+
+      // Atualiza a entrega dentro da rota
+      entregaNaRota.status_entrega = "entregue";
+
+      // Verifica se todas as entregas da rota estão entregues para finalizar a rota
+      const todasEntregues = rota.entregas.every(e => e.status_entrega === "entregue");
+      if (todasEntregues) {
+        rota.status = "concluida";
+      }
+
+      await rota.save();
+
+      return res.status(200).json({ msg: "Entrega confirmada como entregue", rota });
+    } catch (error) {
+
+      return res.status(500).json({ msg: "Erro ao atualizar status da entrega" });
     }
-
-    // Atualiza a entrega dentro da rota
-    entregaNaRota.status_entrega = "entregue";
-
-    // Verifica se todas as entregas da rota estão entregues para finalizar a rota
-    const todasEntregues = rota.entregas.every(e => e.status_entrega === "entregue");
-    if (todasEntregues) {
-      rota.status = "concluida";
-    }
-
-    await rota.save();
-
-    return res.status(200).json({ msg: "Entrega confirmada como entregue", rota });
-  } catch (error) {
-
-    return res.status(500).json({ msg: "Erro ao atualizar status da entrega" });
   }
-}
 
 
 };

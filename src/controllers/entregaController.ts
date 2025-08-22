@@ -246,7 +246,7 @@ getEntregas: async (req: Request, res: Response): Promise<void> => {
 
     res.status(200).json(entregas);
   } catch (error) {
-    console.error("Erro ao buscar entregas:", error);
+    
     res.status(500).json({ msg: "Erro ao buscar entregas" });
   }
 },
