@@ -30,6 +30,11 @@ router.route("/cancelarEntrega/:id").delete(
   permissionsMiddleware('delivery'),
   (req: Request, res: Response) => entregaController.cancelarEntrega(req, res)
 );
+router.route("/adicionarObservacao/:id").post(
+  checkToken,
+  permissionsMiddleware('delivery'),
+  (req: Request, res: Response) => entregaController.adicionarObservacao(req, res)
+);
 
 
 export default router;

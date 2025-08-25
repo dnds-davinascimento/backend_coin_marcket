@@ -323,6 +323,12 @@ const entregaController = {
         res.status(404).json({ msg: "Entrega não encontrada" });
         return;
       }
+      /* adicionar historico */
+      entrega.historico.push({
+        usuario: req.headers.username as string || "Sistema",
+        data: new Date(),
+        acao: "Entrega cancelada"
+      });
 
       // Atualiza o status da entrega para cancelada
       entrega.status_entrega = 'cancelada';
@@ -334,10 +340,46 @@ const entregaController = {
       res.status(500).json({ msg: "Erro ao cancelar entrega" });
     }
   },
+  /* função para adicionar obcevação pelo id da entrega */
+  adicionarObservacao: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const { observacao } = req.body;
+ 
 
+      if (!observacao || typeof observacao !== 'string') {
+        res.status(400).json({ msg: "Observação inválida" });
+        return;
+      }
 
+      const entrega = await Entrega.findById(id);
+      if (!entrega) {
+        res.status(404).json({ msg: "Entrega não encontrada" });
+        return;
+      }
 
+      // Garante que o array de observações está inicializado
+      if (!Array.isArray(entrega.observacoes)) {
+        entrega.observacoes = [];
+      }
+      
 
+      // Adiciona a nova observação ao array de observações
+      entrega.observacoes.push({
+        texto: observacao,
+        data: new Date(),
+        usuario: req.headers.username as string || "Sistema"
+      });
+
+      await entrega.save();
+
+      res.status(200).json({ msg: "Observação adicionada com sucesso", entrega });
+    } catch (error) {
+      
+
+      res.status(500).json({ msg: error });
+    }
+  },
 
 };
 
