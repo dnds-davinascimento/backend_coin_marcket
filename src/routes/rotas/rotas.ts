@@ -30,6 +30,11 @@ router.route("/confirmarEntregas/:id").put(
   permissionsMiddleware('route'),
     (req: Request, res: Response) => rotaController.updateStatusEntregaNaRota(req, res)
   );
+router.route("/cancelarRotaId/:id").put(
+  checkToken,
+  permissionsMiddleware('route'),
+    (req: Request, res: Response) => rotaController.cancelarRotaId(req, res)
+  );
 
 
 export default router;

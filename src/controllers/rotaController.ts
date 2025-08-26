@@ -257,7 +257,66 @@ if (data) {
 
       return res.status(500).json({ msg: "Erro ao atualizar status da entrega" });
     }
+  },
+
+  /*  cancelar rotaID */
+cancelarRotaId: async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status_entrega } = req.body;
+
+    const rota = await Rota.findById(id);
+    if (!rota) {
+      return res.status(404).json({ error: 'Rota não encontrada' });
+    }
+    if (rota.status === 'cancelada') {
+      return res.status(400).json({ error: 'Rota já está cancelada' });
+    }
+
+    // Atualizar o status da rota para 'cancelada'
+    rota.status = "cancelada";
+    await rota.save();
+
+    // Map de mensagens para os status
+    const mensagensStatus: Record<string, string> = {
+      pendente: "Status da entrega atualizado para pendente devido ao cancelamento da rota",
+      cancelada: "Entrega cancelada devido ao cancelamento da rota",
+      devolvido: "Entrega marcada como devolvida devido ao cancelamento da rota",
+      entregue: "Entrega finalizada mesmo com a rota cancelada"
+    };
+
+    // Atualizar o status de todas as entregas associadas
+    for (const entrega of rota.entregas) {
+      const entregaExistente = await Entrega.findById(entrega._id);
+
+      if (entregaExistente) {
+        const novoStatus = status_entrega || "pendente";
+        entregaExistente.status_entrega = novoStatus;
+
+        entregaExistente.historico.push({
+          usuario: (req.headers.username as string) || "Sistema",
+          data: new Date(),
+          acao: mensagensStatus[novoStatus] || "Status da entrega atualizado"
+        });
+
+        await entregaExistente.save();
+      }
+    }
+
+    return res.status(200).json({
+      msg: "Rota cancelada e entregas atualizadas",
+      rota
+    });
+  } catch (error) {
+    
+    return res.status(500).json({
+      error: "Erro ao cancelar a rota",
+      detalhes: error
+    });
   }
+}
+
+
 
 
 };
