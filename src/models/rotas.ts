@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 interface IEntregaAnexo {
   data: Date;
   usuario: string;
-  nome: 'comprovante_entrega' | 'outro';
+  nome: string;
   observacao?: string;
   url: string;
   key?: string;
@@ -87,8 +87,8 @@ const rotaSchema = new Schema<IRota>({
             anexos: [{
                 data: { type: Date, required: true },
                 usuario: { type: String, required: true },
-                nome: { type: String, enum: ['comprovante_entrega', 'outro'], required: true },
-                observacao: { type: String },
+                nome: { type: String, enum: ['comprovante_entrega', 'outro','canhotoAss'], required: true },
+                observacao: { type: String, required: false },
                 url: { type: String, required: true },
                 key: { type: String }
             }],
