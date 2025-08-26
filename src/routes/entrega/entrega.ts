@@ -35,6 +35,16 @@ router.route("/adicionarObservacao/:id").post(
   permissionsMiddleware('delivery'),
   (req: Request, res: Response) => entregaController.adicionarObservacao(req, res)
 );
+router.route("/attachDocumentEntrega/:id").post(
+  checkToken,
+  permissionsMiddleware('delivery'),
+  (req: Request, res: Response) => entregaController.attachDocumentEntrega(req, res)
+);
+router.route("/removeAttachEntrega/:id").post(
+  checkToken,
+  permissionsMiddleware('delivery'),
+  (req: Request, res: Response) => entregaController.removeAttachEntrega(req, res)
+);
 
 
 export default router;

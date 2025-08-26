@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Entrega } from "../models/entregas";
+import Rota from '../models/rotas'; // Importando o modelo Rota
 import User from "../models/user";
 
 export interface DadosOrdemVenda {
@@ -209,7 +210,7 @@ const entregaController = {
       }
 
       const { data, sequencia, numero_nf, status } = req.query;
-     
+
 
       // monta query base com filtros
       let baseQuery: any = {};
@@ -280,7 +281,7 @@ const entregaController = {
 
       res.status(200).json(entregas);
     } catch (error) {
-     
+
       res.status(500).json({ msg: "Erro ao buscar entregas" });
     }
   },
@@ -301,6 +302,7 @@ const entregaController = {
       const { id } = req.params;
 
       const entrega = await Entrega.findById(id);
+      
 
       if (!entrega) {
         res.status(404).json({ msg: "Entrega não encontrada" });
@@ -345,9 +347,8 @@ const entregaController = {
     try {
       const { id } = req.params;
       const { observacao } = req.body;
- 
 
-      if (!observacao || typeof observacao !== 'string') {
+      if (!observacao || typeof observacao !== "string") {
         res.status(400).json({ msg: "Observação inválida" });
         return;
       }
@@ -357,29 +358,167 @@ const entregaController = {
         res.status(404).json({ msg: "Entrega não encontrada" });
         return;
       }
-
-      // Garante que o array de observações está inicializado
-      if (!Array.isArray(entrega.observacoes)) {
-        entrega.observacoes = [];
-      }
       
 
-      // Adiciona a nova observação ao array de observações
-      entrega.observacoes.push({
+      // monta objetos
+      const novaObservacao = {
         texto: observacao,
         data: new Date(),
-        usuario: req.headers.username as string || "Sistema"
-      });
+        usuario: (req.headers.username as string) || "Sistema",
+      };
+      const novoHistorico = {
+        usuario: (req.headers.username as string) || "Sistema",
+        data: new Date(),
+        acao: "Observação adicionada",
+      };
+
+      // inicializa arrays se não tiverem
+      if (!Array.isArray(entrega.observacoes)) entrega.observacoes = [];
+      if (!Array.isArray(entrega.historico)) entrega.historico = [];
+
+      // adiciona na entrega
+      entrega.observacoes.push(novaObservacao);
+      entrega.historico.push(novoHistorico);
 
       await entrega.save();
 
-      res.status(200).json({ msg: "Observação adicionada com sucesso", entrega });
-    } catch (error) {
-      
+      // sincroniza entrega dentro da rota
+      const rotaComEntrega = await Rota.findOne({ "entregas._id": entrega._id });
+  
+      if (rotaComEntrega) {
+       
 
-      res.status(500).json({ msg: error });
+        const entregaNaRota = rotaComEntrega.entregas.find(
+          (e) => e._id.toString() === String(entrega._id)
+        );
+
+        if (entregaNaRota) {
+          // simplesmente copia os arrays inteiros da entrega
+          entregaNaRota.observacoes = [...entrega.observacoes];
+          entregaNaRota.historico = [...entrega.historico];
+          await rotaComEntrega.save();
+        }
+      }
+
+      res.status(200).json({
+        msg: "Observação adicionada com sucesso",
+        entrega,
+      });
+    } catch (error) {
+     
+      res.status(500).json({ msg: "Erro ao adicionar observação", error });
     }
   },
+attachDocumentEntrega: async (req: Request, res: Response) => {
+  try {
+    const entregaId = req.params.id;
+    const id_usuario = req.headers.id as string;
+    const { tipo, observacao, url, key } = req.body;
+
+    if (!entregaId || !id_usuario) {
+      return res.status(400).json({ msg: "ID da entrega e do usuário são necessários" });
+    }
+
+    if (!url) {
+      return res.status(400).json({ msg: "URL do anexo é obrigatório" });
+    }
+
+    const entrega = await Entrega.findById(entregaId);
+    if (!entrega) {
+      return res.status(404).json({ msg: "Entrega não encontrada" });
+    }
+
+    // Adiciona o anexo
+    const anexo = {
+      data: new Date(),
+      usuario: req.headers.username as string || "Sistema",
+      nome: tipo,
+      observacao,
+      url,
+      key
+    };
+
+    if (!entrega.anexos) entrega.anexos = [];
+    if (!entrega.historico) entrega.historico = [];
+
+    entrega.anexos.push(anexo);
+    entrega.historico.push({
+      usuario: req.headers.username as string || "Sistema",
+      data: new Date(),
+      acao: `Anexo adicionado: ${tipo}`
+    });
+
+    const entregaAtualizada = await entrega.save();
+
+    // Sincroniza com a rota
+    const rotaComEntrega = await Rota.findOne({ "entregas._id": entrega._id });
+    if (rotaComEntrega) {
+      const entregaNaRota = rotaComEntrega.entregas.find(e => e._id.toString() === (entrega._id as any).toString());
+      if (entregaNaRota) {
+        entregaNaRota.anexos = [...(entrega.anexos ?? [])];
+        entregaNaRota.historico = [...entrega.historico];
+        await rotaComEntrega.save();
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      msg: "Anexo adicionado com sucesso",
+      entrega: entregaAtualizada
+    });
+  } catch (error) {
+    
+    return res.status(500).json({ msg: "Erro ao adicionar anexo", error });
+  }
+},
+
+removeAttachEntrega: async (req: Request, res: Response) => {
+  try {
+    const entregaId = req.params.id;
+    const id_usuario = req.headers.id as string;
+    const { key } = req.body;
+
+    if (!entregaId || !id_usuario || !key) {
+      return res.status(400).json({ msg: "ID da entrega, do usuário e key do anexo são obrigatórios" });
+    }
+
+    const entrega = await Entrega.findById(entregaId);
+    if (!entrega) return res.status(404).json({ msg: "Entrega não encontrada" });
+
+    const anexoRemovido = entrega.anexos?.find(a => a.key === key);
+    if (!anexoRemovido) return res.status(404).json({ msg: "Anexo não encontrado" });
+
+    entrega.anexos = entrega.anexos?.filter(a => a.key !== key);
+    entrega.historico.push({
+      usuario: req.headers.username as string || "Sistema",
+      data: new Date(),
+      acao: `Anexo removido: ${anexoRemovido.nome || "sem nome"}`
+    });
+
+    const entregaAtualizada = await entrega.save();
+
+    // Sincroniza com a rota
+    const rotaComEntrega = await Rota.findOne({ "entregas._id": entrega._id });
+    if (rotaComEntrega) {
+      const entregaNaRota = rotaComEntrega.entregas.find(e => e._id.toString() === String(entrega._id));
+      if (entregaNaRota) {
+        entregaNaRota.anexos = [...(entrega.anexos ?? [])];
+        entregaNaRota.historico = [...entrega.historico];
+        await rotaComEntrega.save();
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      msg: "Anexo removido com sucesso",
+      entrega: entregaAtualizada
+    });
+  } catch (error) {
+   
+    return res.status(500).json({ msg: `Erro interno ao remover anexo: ${error}` });
+  }
+}
+
 
 };
 

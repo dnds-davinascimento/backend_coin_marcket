@@ -1,5 +1,25 @@
 // src/models/rotas.ts
 import mongoose, { Schema, Document } from "mongoose";
+interface IEntregaAnexo {
+  data: Date;
+  usuario: string;
+  nome: 'comprovante_entrega' | 'outro';
+  observacao?: string;
+  url: string;
+  key?: string;
+}
+
+interface IEntregaHistorico {
+  usuario: string;
+  data: Date;
+  acao: string;
+}
+
+interface IObservacao {
+  data: Date;
+  usuario: string;
+  texto: string;
+}
 export interface IRota extends Document  {
     numero: string;
     motorista: {
@@ -26,6 +46,9 @@ export interface IRota extends Document  {
         numero_nf: string;
         sequencia: number;
         status_entrega: 'pendente' | 'em_transporte' | 'entregue' | 'devolvido' | 'cancelada';
+          anexos?: IEntregaAnexo[];
+          historico: IEntregaHistorico[];
+          observacoes?: IObservacao[];
         link_da_localizacao?: string;
         endereco_entrega: {
             logradouro: string;
@@ -61,6 +84,24 @@ const rotaSchema = new Schema<IRota>({
         email: { type: String, required: false },
         telefone: { type: String, required: false },
         descricao: { type: String, required: true },
+            anexos: [{
+                data: { type: Date, required: true },
+                usuario: { type: String, required: true },
+                nome: { type: String, enum: ['comprovante_entrega', 'outro'], required: true },
+                observacao: { type: String },
+                url: { type: String, required: true },
+                key: { type: String }
+            }],
+            historico: [{
+                usuario: { type: String, required: true },
+                data: { type: Date, required: true },
+                acao: { type: String, required: true }
+            }],
+            observacoes: [{
+                data: { type: Date, required: true },
+                usuario: { type: String, required: true },
+                texto: { type: String, required: true }
+            }],
         status_entrega: {
             type: String,
             enum: ['pendente', 'em_transporte', 'entregue', 'devolvido', 'cancelada'],
