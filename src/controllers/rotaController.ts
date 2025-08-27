@@ -51,6 +51,18 @@ const rotaController = {
       if (!motorista || !veiculo || !data || !entregas || entregas.length === 0) {
         return res.status(400).json({ error: 'Dados incompletos para criar a rota' });
       }
+    // 🚨 Validação: já existe rota com alguma dessas entregas?
+        const entregasIds = entregas.map((e: any) => e._id);
+
+        const rotaExistente = await Rota.findOne({
+          "entregas._id": { $in: entregasIds }
+        });
+
+        if (rotaExistente) {
+          return res.status(400).json({
+            error: "Já existe uma rota que contém uma ou mais dessas entregas"
+          });
+        }
 
       // Gerar número sequencial de 6 dígitos
       const ultimaRota = await Rota.findOne().sort({ createdAt: -1 });
