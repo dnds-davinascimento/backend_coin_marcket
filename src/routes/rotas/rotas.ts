@@ -35,6 +35,11 @@ router.route("/cancelarRotaId/:id").put(
   permissionsMiddleware('route'),
     (req: Request, res: Response) => rotaController.cancelarRotaId(req, res)
   );
+  router.route("/transferirEntrega/:id").post(
+  checkToken,
+  permissionsMiddleware('delivery'),
+  (req: Request, res: Response) => rotaController.transferirEntrega(req, res)
+);
 
 
 export default router;

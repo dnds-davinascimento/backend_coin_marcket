@@ -51,18 +51,18 @@ const rotaController = {
       if (!motorista || !veiculo || !data || !entregas || entregas.length === 0) {
         return res.status(400).json({ error: 'Dados incompletos para criar a rota' });
       }
-    // 🚨 Validação: já existe rota com alguma dessas entregas?
-        const entregasIds = entregas.map((e: any) => e._id);
+      // 🚨 Validação: já existe rota com alguma dessas entregas?
+      const entregasIds = entregas.map((e: any) => e._id);
 
-        const rotaExistente = await Rota.findOne({
-          "entregas._id": { $in: entregasIds }
+      const rotaExistente = await Rota.findOne({
+        "entregas._id": { $in: entregasIds }
+      });
+
+      if (rotaExistente) {
+        return res.status(400).json({
+          error: "Já existe uma rota que contém uma ou mais dessas entregas"
         });
-
-        if (rotaExistente) {
-          return res.status(400).json({
-            error: "Já existe uma rota que contém uma ou mais dessas entregas"
-          });
-        }
+      }
 
       // Gerar número sequencial de 6 dígitos
       const ultimaRota = await Rota.findOne().sort({ createdAt: -1 });
@@ -325,6 +325,87 @@ const rotaController = {
         error: "Erro ao cancelar a rota",
         detalhes: error
       });
+    }
+  },
+  /* função para tranferir entrega para outra rota pelo id da entrega, tem que tirar ela da rota antiga e colocar em outra tanto o id da entrega quanto o id da rota nova vem pelo body */
+  transferirEntrega: async (req: Request, res: Response) => {
+    try {
+      const { entregaId, novaRotaId } = req.body;
+
+      if (!entregaId || !novaRotaId) {
+        return res.status(400).json({ error: 'Dados incompletos para transferir a entrega' });
+      }
+
+      const entrega = await Entrega.findById(entregaId);
+      if (!entrega) {
+        return res.status(404).json({ error: 'Entrega não encontrada' });
+      }
+
+      const rotaAtual = await Rota.findOne({ "entregas._id": entregaId });
+      if (!rotaAtual) {
+        return res.status(404).json({ error: 'Rota atual da entrega não encontrada' });
+      }
+
+      const novaRota = await Rota.findById(novaRotaId);
+      if (!novaRota) {
+        return res.status(404).json({ error: 'Nova rota não encontrada' });
+      }
+
+      // Adicionar ao histórico da entrega
+      entrega.historico.push({
+        usuario: (req.headers.username as string) || "Sistema",
+        data: new Date(),
+        acao: `Entrega transferida da Rota ${rotaAtual.numero} para a Rota ${novaRota.numero}`
+      });
+      
+      await entrega.save();
+
+      // Remover a entrega da rota atual
+      const acaoHistorico = `Entrega transferida da Rota ${rotaAtual.numero} para a Rota ${novaRota.numero}`;
+      rotaAtual.entregas = rotaAtual.entregas.filter(e => e._id.toString() !== entregaId);
+      rotaAtual.entregas = rotaAtual.entregas.map(e => {
+        if (e._id.toString() === entregaId) {
+          e.historico = e.historico ?? [];
+          e.historico.push({
+            usuario: (req.headers.username as string) || "Sistema",
+            data: new Date(),
+            acao: acaoHistorico
+          });
+        }
+        return e;
+      });
+      // Se não sobrou nenhuma entrega, apagar a rota
+      if (rotaAtual.entregas.length === 0) {
+        await Rota.findByIdAndDelete(rotaAtual._id);
+      } else {
+        await rotaAtual.save();
+      }
+
+      // Adicionar a entrega na nova rota
+      const entregaObj = entrega.toObject();
+      novaRota.entregas.push({
+        _id: (entregaObj._id as any).toString(),
+        orden_de_entrega: novaRota.entregas.length + 1,
+        nome: entregaObj.consumidor_nome || 'N/A',
+        email: entregaObj.consumidor_email || 'N/A',
+        telefone: entregaObj.consumidor_contato || 'N/A',
+        descricao: `${entregaObj.endereco_entrega.logradouro}, ${entregaObj.endereco_entrega.numero} - ${entregaObj.endereco_entrega.bairro}, ${entregaObj.endereco_entrega.descricaoCidade} - ${entregaObj.endereco_entrega.estado}`,
+        numero_nf: entregaObj.numero_nf,
+        sequencia: entregaObj.sequencia,
+        status_entrega: entregaObj.status_entrega,
+        link_da_localizacao: entregaObj.link_da_localizacao,
+        endereco_entrega: entregaObj.endereco_entrega,
+        historico: entregaObj.historico ?? [],
+        anexos: entregaObj.anexos ?? [],
+        observacoes: entregaObj.observacoes ?? []
+      });
+
+      await novaRota.save();
+
+      return res.status(200).json({ msg: 'Entrega transferida com sucesso', novaRota });
+
+    } catch (error) {
+      return res.status(500).json({ error: 'Erro ao transferir a entrega', detalhes: error });
     }
   }
 
