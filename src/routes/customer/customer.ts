@@ -61,7 +61,7 @@ const router: Router = Router();
  */
 
 router.route("/registerCustomer").post(
-       checkToken,
+      /*  checkToken, */
 
     (req: Request, res: Response) => customerControllers.createCustomer(req, res)
   );

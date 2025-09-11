@@ -96,10 +96,6 @@ const customerSchema = new Schema<ICustomer>({
         trim: true,
         required: function(this: any) { return this.type === 'company'; } // Obrigatório apenas para empresas
     },
-    rg: {
-        type: String,
-        trim: true
-    },
     cpf_cnpj: {
         type: String,
         trim: true,

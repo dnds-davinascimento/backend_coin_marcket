@@ -409,8 +409,5 @@ const rotaController = {
     }
   }
 
-
-
-
 };
 export default rotaController;
