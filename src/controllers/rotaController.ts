@@ -392,6 +392,7 @@ const rotaController = {
         descricao: `${entregaObj.endereco_entrega.logradouro}, ${entregaObj.endereco_entrega.numero} - ${entregaObj.endereco_entrega.bairro}, ${entregaObj.endereco_entrega.descricaoCidade} - ${entregaObj.endereco_entrega.estado}`,
         numero_nf: entregaObj.numero_nf,
         sequencia: entregaObj.sequencia,
+        responsavelPorReceber: entregaObj.responsavelPorReceber ,
         status_entrega: entregaObj.status_entrega,
         link_da_localizacao: entregaObj.link_da_localizacao,
         endereco_entrega: entregaObj.endereco_entrega,

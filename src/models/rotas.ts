@@ -45,6 +45,10 @@ export interface IRota extends Document  {
         descricao: string;
         numero_nf: string;
         sequencia: number;
+        responsavelPorReceber: {
+            nome: string;
+            telefone: string;
+        };
         status_entrega: 'pendente' | 'em_transporte' | 'entregue' | 'devolvido' | 'cancelada';
           anexos?: IEntregaAnexo[];
           historico: IEntregaHistorico[];
@@ -115,6 +119,10 @@ const rotaSchema = new Schema<IRota>({
             descricaoCidade: { type: String, required: true },
             estado: { type: String, required: true },
             cep: { type: String, required: true }
+        },
+        responsavelPorReceber: {
+            nome: { type: String, required: false },
+            telefone: { type: String, required: false }
         }
     }],
     veiculo: {
