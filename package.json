@@ -1,5 +1,5 @@
 {
-  "name": "backend_croi_distribuidora",
+  "name": "backend_coin_marcket",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -21,6 +21,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
+    "ethers": "^6.15.0",
     "express": "^4.21.2",
     "express-basic-auth": "^1.2.1",
     "jsonwebtoken": "^9.0.2",

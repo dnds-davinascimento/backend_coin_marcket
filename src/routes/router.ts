@@ -17,6 +17,7 @@ import reviewproductRouter from "./reviewproduct/reviewproduct";
 import entregaRouter from "./entrega/entrega";
 import rotaController from "./rotas/rotas";
 import veiculoRouter from "./veiculo/veiculo"; // Importando o router de veículos
+import walletRoutes from "./wallet/walletRoutes"; // Importando o router de wallet
 
 
 const router: Router = Router();
@@ -40,7 +41,7 @@ router.use("/", reviewproductRouter);
 router.use("/", entregaRouter);
 router.use("/", rotaController); // Usando o controller de rotas
 router.use("/", veiculoRouter); // Usando o router de veículos
-
+router.use("/", walletRoutes); // Usando o router de wallet
 
 
 export default router;
