@@ -24,7 +24,7 @@ jobs:
 
 
         run: |
-          # Salvar a chave privada (modulointegracao.pem) em um arquivo temporário
+          # Salvar a chave privada (.pem) em um arquivo temporário
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > /tmp/aws_key.pem
           chmod 600 /tmp/aws_key.pem
 
@@ -52,7 +52,7 @@ jobs:
             fi
         
             # Defina o caminho do seu diretório de projeto na EC2
-            PROJECT_DIR="/home/ubuntu/backend_croi_distribuidora"
+            PROJECT_DIR="/home/ubuntu/backend_coin_marcket"
 
             # Verificar se o diretório do projeto já existe
             if [ ! -d "$PROJECT_DIR" ]; then
