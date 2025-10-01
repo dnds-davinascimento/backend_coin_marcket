@@ -18,9 +18,9 @@ jobs:
       # Passo 3: Conectar à EC2 via SSH e executar os comandos
       - name: Deploy to EC2
         env:
-          HOST: ec2-18-228-236-148.sa-east-1.compute.amazonaws.com  # DNS público da sua EC2
+          HOST: ec2-18-216-209-153.us-east-2.compute.amazonaws.com  # DNS público da sua EC2
           USER: ubuntu  # Usuário da EC2 (no seu caso é "ubuntu")
-          REPO_URL: git@github.com:croitech/backend_croi_distribuidora.git  # URL do repositório
+          REPO_URL: git@github.com:dnds-davinascimento/backend_coin_marcket.git  # URL do repositório
 
 
         run: |
