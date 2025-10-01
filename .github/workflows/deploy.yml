@@ -53,18 +53,17 @@ jobs:
         
             # Defina o caminho do seu diretório de projeto na EC2
             PROJECT_DIR="/home/ubuntu/backend_coin_marcket"
-
-            # Verificar se o diretório do projeto já existe
+            REPO_URL="git@github.com:dnds-davinascimento/backend_coin_marcket.git"
+            
             if [ ! -d "$PROJECT_DIR" ]; then
-              echo "Diretório do projeto não encontrado. Clonando o repositório..."
-              # Criar o diretório e clonar o repositório
-              mkdir -p $PROJECT_DIR
-              git clone $REPO_URL $PROJECT_DIR
+                echo "Clonando o repositório..."
+                git clone $REPO_URL $PROJECT_DIR
             else
-              echo "Diretório do projeto já existe. Atualizando repositório..."
-              cd $PROJECT_DIR
-              git pull origin main  # Atualiza o repositório com as mudanças mais recentes
+                echo "Diretório já existe, atualizando..."
+                cd $PROJECT_DIR
+                git pull origin main
             fi
+
 
             # Navegar até o diretório do projeto
             cd $PROJECT_DIR || exit
